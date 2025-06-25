@@ -193,13 +193,23 @@ def render_layout(tables, bridge_chart_data, title, subtitle, insights_dfs, warn
             slides.append(rendered)
 
     if bridge_chart_data is not None:
-        table_vars["bridge_data"] = [{ "data": bridge_chart_data.to_dict(orient="records") }] if bridge_chart_data is not None else []
+        # Get dimension name from tables keys
+        x_axis_label = list(tables.keys())[0]
+        
+        # Get metric name from table columns
+        table_columns = list(tables.values())[0].columns.tolist()
+        metric_columns = [col for col in table_columns if '(' in col and 'Current' in col]
+        y_axis_label = metric_columns[0] if metric_columns else "Sales (Current)"  # "Sales (Current)"
+        
+        table_vars["bridge_data"] = [{ "data": bridge_chart_data.to_dict(orient="records") }]
+        table_vars["x_axis_title"] = x_axis_label
+        table_vars["y_axis_title"] = y_axis_label
+        
         bridge_viz_layout = json.loads(bridge_chart_viz_layout)
         meta_viz_layout = apply_metadata_to_layout_element(bridge_viz_layout, "HighchartsChart0",
-                                                           {
-                                                               "sourceDataframeId": bridge_chart_data.max_metadata.get_id()})
+                                                        {"sourceDataframeId": bridge_chart_data.max_metadata.get_id()})
         rendered = wire_layout(meta_viz_layout, {**general_vars, **table_vars})
-        viz_list.append(SkillVisualization(title=name, layout=rendered))
+        viz_list.append(SkillVisualization(title="Bridge Chart", layout=rendered))
 
     return viz_list, slides, insights, max_response_prompt, export_data
 
