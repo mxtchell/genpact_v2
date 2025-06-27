@@ -122,6 +122,7 @@ def simple_breakout(parameters: SkillInput):
 
     viz, slides, insights, final_prompt, export_data = render_layout(tables,
                                                             env.ba.get_display_bridge_charts(),
+                                                            env.ba.get_bridge_chart_metadata(),
                                                             env.ba.title,
                                                             env.ba.subtitle,
                                                             insights_dfs,
@@ -152,7 +153,7 @@ def find_footnote(footnotes, df):
             break
     return dim_note
 
-def render_layout(tables, bridge_chart_data, title, subtitle, insights_dfs, warnings, footnotes, max_prompt, insight_prompt, viz_layout, bridge_chart_viz_layout, table_ppt_layout):
+def render_layout(tables, bridge_chart_data, bridge_metadata, title, subtitle, insights_dfs, warnings, footnotes, max_prompt, insight_prompt, viz_layout, bridge_chart_viz_layout, table_ppt_layout):
     facts = []
     for i_df in insights_dfs:
         facts.append(i_df.to_dict(orient='records'))
@@ -193,13 +194,8 @@ def render_layout(tables, bridge_chart_data, title, subtitle, insights_dfs, warn
             slides.append(rendered)
 
     if bridge_chart_data is not None:
-        # Get dimension name from tables keys
-        x_axis_label = list(tables.keys())[0]
-        
-        # Get metric name from table columns
-        table_columns = list(tables.values())[0].columns.tolist()
-        metric_columns = [col for col in table_columns if '(' in col and 'Current' in col]
-        y_axis_label = metric_columns[0] if metric_columns else "Sales (Current)"  # "Sales (Current)"
+        x_axis_label = bridge_metadata.get('x_axis_title', 'Dimension')
+        y_axis_label = bridge_metadata.get('y_axis_title', 'Metric')
         
         table_vars["bridge_data"] = [{ "data": bridge_chart_data.to_dict(orient="records") }]
         table_vars["x_axis_title"] = x_axis_label
