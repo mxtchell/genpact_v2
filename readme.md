@@ -1,6 +1,8 @@
-## Belk Code Skills
+## AnswerRocket Code Skills
 
-This repository contains the code for the Belk skills.
+This repository contains the source code for the template skills used in AnswerRocket. 
+
+These templates serve as a foundation for developing and customizing new skills within the platform.
 
 ## Setup
 
