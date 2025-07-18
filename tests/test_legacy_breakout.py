@@ -100,7 +100,7 @@ class TestLegacyBreakoutCommonParameters(TestLegacyBreakout):
     """Test the legacy breakout skill with common parameters to verify functionality"""
 
     config = PastaV9LegacyBreakoutCommonParametersConfig
-    preview = True
+    preview = False
 
     def test_single_metric_with_breakout(self):
         parameters = {
@@ -114,6 +114,44 @@ class TestLegacyBreakoutCommonParameters(TestLegacyBreakout):
             LegacyBreakoutParameters.metrics.value: [self.config.metric_1],
             LegacyBreakoutParameters.periods.value: [self.config.period_filter],
             LegacyBreakoutParameters.breakouts.value: [self.config.breakout_1]
+        }
+        self._assert_legacy_breakout_runs_without_errors(parameters)
+
+    def test_single_metric_with_growth_type_yoy(self):
+        parameters = {
+            LegacyBreakoutParameters.metrics.value: [self.config.metric_1],
+            LegacyBreakoutParameters.breakouts.value: [self.config.breakout_1],
+            LegacyBreakoutParameters.periods.value: [self.config.period_filter],
+            LegacyBreakoutParameters.growth_type.value: self.config.growth_type_yoy
+        }
+        self._assert_legacy_breakout_runs_without_errors(parameters)
+
+    def test_single_metric_with_growth_type_pop(self):
+        parameters = {
+            LegacyBreakoutParameters.metrics.value: [self.config.metric_1],
+            LegacyBreakoutParameters.breakouts.value: [self.config.breakout_1],
+            LegacyBreakoutParameters.periods.value: [self.config.period_filter],
+            LegacyBreakoutParameters.growth_type.value: self.config.growth_type_pop
+        }
+        self._assert_legacy_breakout_runs_without_errors(parameters)
+
+    def test_single_metric_with_growth_trend_fastest_growing(self):
+        parameters = {
+            LegacyBreakoutParameters.metrics.value: [self.config.metric_1],
+            LegacyBreakoutParameters.breakouts.value: [self.config.breakout_1],
+            LegacyBreakoutParameters.periods.value: [self.config.period_filter],
+            LegacyBreakoutParameters.growth_type.value: self.config.growth_type_yoy,
+            LegacyBreakoutParameters.growth_trend.value: self.config.growth_trend_fastest_growing
+        }
+        self._assert_legacy_breakout_runs_without_errors(parameters)
+
+    def test_single_metric_with_growth_trend_highest_declining(self):
+        parameters = {
+            LegacyBreakoutParameters.metrics.value: [self.config.metric_1],
+            LegacyBreakoutParameters.breakouts.value: [self.config.breakout_1],
+            LegacyBreakoutParameters.periods.value: [self.config.period_filter],
+            LegacyBreakoutParameters.growth_type.value: self.config.growth_type_yoy,
+            LegacyBreakoutParameters.growth_trend.value: self.config.growth_trend_highest_declining
         }
         self._assert_legacy_breakout_runs_without_errors(parameters)
 
@@ -195,6 +233,25 @@ class TestLegacyBreakoutCommonParameters(TestLegacyBreakout):
             LegacyBreakoutParameters.growth_trend.value: self.config.growth_trend_fastest_growing,
             LegacyBreakoutParameters.other_filters.value: [self.config.filter_1],
             LegacyBreakoutParameters.limit_n.value: 15
+        }
+        self._assert_legacy_breakout_runs_without_errors(parameters)
+
+    def test_calculated_metric_filters_basic(self):
+        calculated_filters = [
+            {
+                "metric": self.config.metric_1,
+                "computation": "growth",
+                "operator": ">",
+                "value": 0,
+                "scale": "percentage"
+            }
+        ]
+        parameters = {
+            LegacyBreakoutParameters.metrics.value: [self.config.metric_1],
+            LegacyBreakoutParameters.breakouts.value: [self.config.breakout_1],
+            LegacyBreakoutParameters.periods.value: [self.config.period_filter],
+            LegacyBreakoutParameters.growth_type.value: self.config.growth_type_yoy,
+            LegacyBreakoutParameters.calculated_metric_filters.value: calculated_filters
         }
         self._assert_legacy_breakout_runs_without_errors(parameters)
 
