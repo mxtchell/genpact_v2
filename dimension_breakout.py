@@ -122,7 +122,6 @@ def simple_breakout(parameters: SkillInput):
 
     viz, slides, insights, final_prompt, export_data = render_layout(tables,
                                                             env.ba.get_display_bridge_charts(),
-                                                            env.ba.get_bridge_chart_metadata(),
                                                             env.ba.title,
                                                             env.ba.subtitle,
                                                             insights_dfs,
@@ -153,7 +152,7 @@ def find_footnote(footnotes, df):
             break
     return dim_note
 
-def render_layout(tables, bridge_chart_data, bridge_metadata, title, subtitle, insights_dfs, warnings, footnotes, max_prompt, insight_prompt, viz_layout, bridge_chart_viz_layout, table_ppt_layout):
+def render_layout(tables, bridge_chart_data, title, subtitle, insights_dfs, warnings, footnotes, max_prompt, insight_prompt, viz_layout, bridge_chart_viz_layout, table_ppt_layout):
     facts = []
     for i_df in insights_dfs:
         facts.append(i_df.to_dict(orient='records'))
@@ -194,18 +193,13 @@ def render_layout(tables, bridge_chart_data, bridge_metadata, title, subtitle, i
             slides.append(rendered)
 
     if bridge_chart_data is not None:
-        x_axis_label = bridge_metadata.get('x_axis_title', 'Dimension')
-        y_axis_label = bridge_metadata.get('y_axis_title', 'Metric')
+        for chart_name, chart_info in bridge_chart_data.items():
         
-        table_vars["bridge_data"] = [{ "data": bridge_chart_data.to_dict(orient="records") }]
-        table_vars["x_axis_title"] = x_axis_label
-        table_vars["y_axis_title"] = y_axis_label
-        
-        bridge_viz_layout = json.loads(bridge_chart_viz_layout)
-        meta_viz_layout = apply_metadata_to_layout_element(bridge_viz_layout, "HighchartsChart0",
-                                                        {"sourceDataframeId": bridge_chart_data.max_metadata.get_id()})
-        rendered = wire_layout(meta_viz_layout, {**general_vars, **table_vars})
-        viz_list.append(SkillVisualization(title="Bridge Chart", layout=rendered))
+            bridge_viz_layout = json.loads(bridge_chart_viz_layout)
+            meta_viz_layout = apply_metadata_to_layout_element(bridge_viz_layout, "HighchartsChart0",
+                                                            {"sourceDataframeId": chart_info["sourceDataframeId"]})
+            rendered = wire_layout(meta_viz_layout, {**general_vars, **table_vars, **chart_info})
+            viz_list.append(SkillVisualization(title=chart_name, layout=rendered))
 
     return viz_list, slides, insights, max_response_prompt, export_data
 
