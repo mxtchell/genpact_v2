@@ -23,5 +23,5 @@ Code skills that execute on your machine versus the packaged skill that executes
 To mitigate this, [`nfl/MaxServer/setup/requirements.txt`](https://bitbucket.org/aglabs/nfl/src/main/MaxServer/setup/requirements.txt) is used as a set of constraints, copy + pasted into `platform_constraints.txt`. `requirements.in` specifies the packages to install constrained by `platform_constraints.txt`, which `make` compiles into `requirements.txt` and installs the packages from there.
 
 Tips:
-- If you get a constraints error when running `make`, most likely the version of `ar-analytics` package is different between the `platform_constraints.txt` and `requirements.txt` files.
+- If you get a constraints error when running `make`, most likely the version of `ar-analytics` package is different between the `platform_constraints.txt` and `requirements.in` files.
 - If you want to test a code skill on your local machine against a specific build of Max, checkout `nfl` at that build and copy the `nfl/MaxServer/setup/requirements.txt` and paste into `platform_constraints.txt`, then run `make` to install the dependencies constrained by that max build.
