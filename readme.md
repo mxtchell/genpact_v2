@@ -1,4 +1,4 @@
-## AnswerRocket Code Skills
+## AnswerRocket Template Code Skills
 
 This repository contains the source code for the template skills used in AnswerRocket. 
 
@@ -6,9 +6,9 @@ These templates serve as a foundation for developing and customizing new skills 
 
 ## Setup
 
-This repository contains a .envrc file for use with direnv. With that installed you should have a separate python interpreter that direnv's hook will activate for you when you cd into this repository.
+This repository contains a .envrc file for use with [direnv](https://direnv.net/docs/installation.html). With that installed you should have a separate python interpreter that direnv's hook will activate for you when you `cd` into this repository.
 
-Once you have direnv set up and activating inside the repo, run `make` to install the current dependencies.
+Once you have direnv set up and activated inside the repo, run `make` to install the current dependencies.
 
 ## Local Development
 
