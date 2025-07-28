@@ -255,6 +255,16 @@ class TestLegacyBreakoutCommonParameters(TestLegacyBreakout):
         }
         self._assert_legacy_breakout_runs_without_errors(parameters)
 
+    def test_bridge_chart_generation(self):
+        """Test that bridge chart is generated with single metric, breakout, and growth comparison"""
+        parameters = {
+            LegacyBreakoutParameters.metrics.value: [self.config.metric_1],
+            LegacyBreakoutParameters.breakouts.value: [self.config.breakout_1],
+            LegacyBreakoutParameters.periods.value: ["2022", "2021"],
+            LegacyBreakoutParameters.growth_type.value: self.config.growth_type_yoy
+        }
+        self._assert_legacy_breakout_runs_without_errors(parameters)
+
 
 class TestLegacyBreakoutGuardrails(TestLegacyBreakout):
     """Test guardrails and error conditions for legacy breakout skill"""
