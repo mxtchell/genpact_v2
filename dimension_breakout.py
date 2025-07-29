@@ -56,6 +56,7 @@ logger = logging.getLogger(__name__)
         ),
         SkillParameter(
             name="other_filters",
+            is_multi=True,
             constrained_to="filters"
         ),
         SkillParameter(
