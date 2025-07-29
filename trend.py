@@ -64,7 +64,8 @@ logger = logging.getLogger(__name__)
         ),
         SkillParameter(
             name="other_filters",
-            constrained_to="filters"
+            constrained_to="filters",
+            is_multi=True
         ),
         SkillParameter(
             name="max_prompt",
