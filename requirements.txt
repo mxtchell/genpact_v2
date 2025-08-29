@@ -19,7 +19,7 @@ anyio==4.5.0
     #   httpx
     #   starlette
     #   watchfiles
-ar-analytics @ git+https://bitbucket.org/aglabs/ar-analytics.git@v0.1.9
+ar-analytics @ git+https://bitbucket.org/aglabs/ar-analytics.git@v0.2.0
     # via
     #   -c platform_constraints.txt
     #   -r requirements.in
@@ -51,7 +51,7 @@ dotenv==0.9.9
     # via
     #   -c platform_constraints.txt
     #   skill-framework
-email-validator==2.2.0
+email-validator==2.3.0
     # via
     #   fastapi
     #   pydantic
@@ -205,7 +205,7 @@ rich-toolkit==0.15.0
     #   fastapi-cloud-cli
 rignore==0.6.4
     # via fastapi-cloud-cli
-sentry-sdk==2.35.0
+sentry-sdk==2.35.1
     # via fastapi-cloud-cli
 sgqlc==16.4
     # via
