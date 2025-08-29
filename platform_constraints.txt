@@ -4,6 +4,8 @@
 #
 #    pip-compile --output-file=setup/requirements.txt --strip-extras setup/requirements.in
 #
+a2wsgi==1.10.10
+    # via -r setup/requirements.in
 aiohappyeyeballs==2.4.3
     # via aiohttp
 aiohttp==3.10.11
@@ -12,25 +14,30 @@ aiohttp==3.10.11
     #   llama-index-core
 aiosignal==1.3.1
     # via aiohttp
+aiosqlite==0.21.0
+    # via llama-index-core
 annotated-types==0.7.0
     # via pydantic
-answerrocket-client==0.2.56
+answerrocket-client==0.2.81
     # via
     #   -r setup/requirements.in
     #   ar-analytics
 anthropic==0.50.0
     # via -r setup/requirements.in
-anyio==4.4.0
+anyio==4.5.0
     # via
     #   -r setup/requirements.in
     #   anthropic
     #   httpx
+    #   mcp
     #   openai
+    #   sse-starlette
+    #   starlette
 anytree==2.12.1
     # via ttimer
 appnope==0.1.4
     # via ipython
-ar-analytics @ git+https://bitbucket.org/aglabs/ar-analytics.git@v0.1.6
+ar-analytics @ git+https://bitbucket.org/aglabs/ar-analytics.git@v0.2.0
     # via -r setup/requirements.in
 asttokens==2.4.1
     # via stack-data
@@ -66,9 +73,9 @@ banks==2.1.2
     # via llama-index-core
 beautifulsoup4==4.12.3
     # via -r setup/requirements.in
-boto3==1.24.59
+boto3==1.39.12
     # via -r setup/requirements.in
-botocore==1.27.96
+botocore==1.39.12
     # via
     #   boto3
     #   s3transfer
@@ -90,7 +97,9 @@ cheroot==8.6.0
     #   -r setup/requirements.in
     #   web-py
 click==8.1.7
-    # via nltk
+    # via
+    #   nltk
+    #   uvicorn
 cmdstanpy==1.2.4
     # via prophet
 colorama==0.4.6
@@ -99,8 +108,9 @@ contourpy==1.3.0
     # via matplotlib
 cramjam==2.9.0
     # via fastparquet
-cryptography==43.0.1
+cryptography==44.0.1
     # via
+    #   -r setup/requirements.in
     #   authlib
     #   azure-identity
     #   azure-storage-blob
@@ -143,8 +153,6 @@ executing==2.1.0
     # via stack-data
 fasteners==0.18
     # via -r setup/requirements.in
-fastjsonschema==2.20.0
-    # via nbformat
 fastparquet==0.8.3
     # via -r setup/requirements.in
 filelock==3.16.1
@@ -213,12 +221,17 @@ grpcio==1.67.0
     #   grpcio-status
 grpcio-status==1.62.3
     # via google-api-core
-h11==0.14.0
-    # via httpcore
+h11==0.16.0
+    # via
+    #   -r setup/requirements.in
+    #   httpcore
+    #   uvicorn
 holidays==0.58
     # via prophet
-httpcore==1.0.6
-    # via httpx
+httpcore==1.0.9
+    # via
+    #   -r setup/requirements.in
+    #   httpx
 httplib2==0.22.0
     # via
     #   google-api-python-client
@@ -229,7 +242,10 @@ httpx==0.28.1
     #   anthropic
     #   langsmith
     #   llama-index-core
+    #   mcp
     #   openai
+httpx-sse==0.4.1
+    # via mcp
 idna==3.10
     # via
     #   anyio
@@ -266,17 +282,15 @@ jmespath==1.0.1
     #   botocore
 joblib==1.4.2
     # via nltk
-jsonschema==4.23.0
-    # via nbformat
-jsonschema-specifications==2024.10.1
+jsonschema==4.25.0
+    # via mcp
+jsonschema-specifications==2025.4.1
     # via jsonschema
-jupyter-core==5.7.2
-    # via nbformat
 kiwisolver==1.4.7
     # via matplotlib
 langsmith==0.3.42
     # via -r setup/requirements.in
-llama-index-core==0.12.34
+llama-index-core==0.12.41
     # via
     #   -r setup/requirements.in
     #   llama-parse
@@ -289,7 +303,9 @@ lxml==4.9.3
 markdown==3.4.4
     # via -r setup/requirements.in
 markupsafe==3.0.1
-    # via jinja2
+    # via
+    #   jinja2
+    #   werkzeug
 marshmallow==3.23.0
     # via dataclasses-json
 matplotlib==3.7.2
@@ -299,6 +315,8 @@ matplotlib==3.7.2
     #   prophet
 matplotlib-inline==0.1.7
     # via ipython
+mcp==1.11.0
+    # via -r setup/requirements.in
 more-itertools==10.5.0
     # via
     #   cheroot
@@ -315,8 +333,6 @@ multidict==6.1.0
     #   yarl
 mypy-extensions==1.0.0
     # via typing-inspect
-nbformat==5.7.0
-    # via -r setup/requirements.in
 nest-asyncio==1.6.0
     # via llama-index-core
 networkx==3.4.1
@@ -385,7 +401,6 @@ pillow==11.0.0
 platformdirs==4.3.7
     # via
     #   banks
-    #   jupyter-core
     #   virtualenv
 playwright==1.48.0
     # via -r setup/requirements.in
@@ -438,10 +453,14 @@ pydantic==2.8.2
     #   google-generativeai
     #   langsmith
     #   llama-index-core
+    #   mcp
     #   openai
+    #   pydantic-settings
     #   skill-framework
 pydantic-core==2.20.1
     # via pydantic
+pydantic-settings==2.10.1
+    # via mcp
 pyee==12.0.0
     # via playwright
 pygments==2.18.0
@@ -469,9 +488,13 @@ python-dateutil==2.9.0.post0
     #   matplotlib
     #   pandas
 python-dotenv==1.1.0
-    # via dotenv
+    # via
+    #   dotenv
+    #   pydantic-settings
 python-ldap==3.4.4
     # via -r setup/requirements.in
+python-multipart==0.0.20
+    # via mcp
 python-pptx==0.6.23
     # via -r setup/requirements.in
 pytz==2024.2
@@ -482,7 +505,7 @@ pyyaml==6.0.2
     #   llama-index-core
 rapidfuzz==3.10.0
     # via -r setup/requirements.in
-referencing==0.35.1
+referencing==0.36.2
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -492,7 +515,7 @@ regex==2024.9.11
     #   tiktoken
 reportlab==3.6.13
     # via -r setup/requirements.in
-requests==2.32.3
+requests==2.32.4
     # via
     #   -r setup/requirements.in
     #   azure-core
@@ -507,7 +530,7 @@ requests==2.32.3
     #   weaviate-client
 requests-toolbelt==1.0.0
     # via langsmith
-rpds-py==0.20.0
+rpds-py==0.26.0
     # via
     #   jsonschema
     #   referencing
@@ -515,7 +538,7 @@ rsa==4.9
     # via
     #   google-auth
     #   oauth2client
-s3transfer==0.6.2
+s3transfer==0.13.1
     # via boto3
 scipy==1.10.0
     # via
@@ -539,7 +562,7 @@ six==1.16.0
     #   oauth2client
     #   patsy
     #   python-dateutil
-skill-framework==0.3.12
+skill-framework==0.3.13
     # via
     #   -r setup/requirements.in
     #   ar-analytics
@@ -558,10 +581,20 @@ sqlglot==26.2.1
     #   ar-analytics
 sqlparse==0.5.3
     # via -r setup/requirements.in
+sse-starlette==2.1.3
+    # via mcp
 stack-data==0.6.3
     # via ipython
 stanio==0.5.1
     # via cmdstanpy
+starlette==0.47.1
+    # via
+    #   -r setup/requirements.in
+    #   mcp
+    #   sse-starlette
+    #   starlette-context
+starlette-context==0.4.0
+    # via -r setup/requirements.in
 statsmodels==0.13.2
     # via -r setup/requirements.in
 tabulate==0.9.0
@@ -585,14 +618,14 @@ tqdm==4.66.5
 traitlets==5.14.3
     # via
     #   ipython
-    #   jupyter-core
     #   matplotlib-inline
-    #   nbformat
 ttimer==0.0.2
     # via -r setup/requirements.in
 typing-extensions==4.12.2
     # via
     #   -r setup/requirements.in
+    #   a2wsgi
+    #   aiosqlite
     #   answerrocket-client
     #   anthropic
     #   anyio
@@ -606,23 +639,33 @@ typing-extensions==4.12.2
     #   pydantic
     #   pydantic-core
     #   pyee
+    #   referencing
     #   sqlalchemy
+    #   starlette
     #   typing-inspect
+    #   typing-inspection
+    #   uvicorn
 typing-inspect==0.9.0
     # via
     #   dataclasses-json
     #   llama-index-core
+typing-inspection==0.4.1
+    # via pydantic-settings
 ua-parser==0.18.0
     # via user-agents
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.20
+urllib3==2.5.0
     # via
     #   botocore
     #   elastic-apm
     #   requests
 user-agents==2.2.0
     # via -r setup/requirements.in
+uvicorn==0.35.0
+    # via
+    #   mcp
+    #   sse-starlette
 uwsgi==2.0.28
     # via -r setup/requirements.in
 validators==0.34.0
@@ -634,6 +677,8 @@ wcwidth==0.2.13
 weaviate-client==3.26.7
     # via -r setup/requirements.in
 web-py==0.62
+    # via -r setup/requirements.in
+werkzeug==3.1.3
     # via -r setup/requirements.in
 wrapt==1.16.0
     # via
