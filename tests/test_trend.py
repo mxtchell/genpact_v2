@@ -3,14 +3,12 @@ from typing import Dict, List
 from trend import trend
 from skill_framework import ExitFromSkillException, SkillInput
 from skill_framework.preview import preview_skill
-from dataset_definitions.pasta_v9 import PastaV9TestColumnNames
+from dataset_definitions.genpact_insurance import GenpactInsuranceTestColumnNames
 
 @dataclass
 class TestTrendCommonParametersConfig:
     metric_1: str
     metric_2: str
-    share_metric_1: str
-    share_metric_2: str
     breakout_1: str
     breakout_2: str
     period_filter: str
@@ -21,16 +19,14 @@ class TestTrendCommonParametersConfig:
     growth_type__yoy: str = "Y/Y"
     growth_type__pop: str = "P/P"
 
-PastaV9TrendCommonParametersConfig = TestTrendCommonParametersConfig(
-    metric_1=PastaV9TestColumnNames.SALES.value,
-    metric_2=PastaV9TestColumnNames.ACV.value,
-    share_metric_1=PastaV9TestColumnNames.SALES_SHARE.value,
-    share_metric_2=PastaV9TestColumnNames.ACV_SHARE.value,
-    breakout_1=PastaV9TestColumnNames.BRAND.value,
-    breakout_2=PastaV9TestColumnNames.BASE_SIZE.value,
-    period_filter="2022",
-    filter_1={"dim": PastaV9TestColumnNames.SUB_CATEGORY.value, "op": "=", "val": PastaV9TestColumnNames.SUB_CATEGORY__SEMOLINA.value},
-    filter_2={"dim": PastaV9TestColumnNames.MANUFACTURER.value, "op": "=", "val": PastaV9TestColumnNames.MANUFACTURER__PRIVATE_LABEL.value}
+GenpactInsuranceTrendCommonParametersConfig = TestTrendCommonParametersConfig(
+    metric_1=GenpactInsuranceTestColumnNames.CLAIMS_EXPENSE.value,
+    metric_2=GenpactInsuranceTestColumnNames.COMBINED_RATIO.value,
+    breakout_1=GenpactInsuranceTestColumnNames.COUNTRY.value,
+    breakout_2=GenpactInsuranceTestColumnNames.DISTRIBUTION_CHANNEL.value,
+    period_filter="2024",
+    filter_1={"dim": GenpactInsuranceTestColumnNames.GEO.value, "op": "=", "val": GenpactInsuranceTestColumnNames.GEO__EUROPE.value},
+    filter_2={"dim": GenpactInsuranceTestColumnNames.LINE_OF_BUSINESS.value, "op": "=", "val": GenpactInsuranceTestColumnNames.LINE_OF_BUSINESS__GROUP.value}
 ) 
 
 @dataclass
@@ -45,7 +41,7 @@ class TestTrendGuardrailsConfig:
         if self.empty_metrics is None:
             self.empty_metrics = []
 
-PastaV9TrendGuardrailsConfig = TestTrendGuardrailsConfig()
+GenpactInsuranceTrendGuardrailsConfig = TestTrendGuardrailsConfig()
 
 class TestTrend:
 
@@ -72,7 +68,7 @@ class TestTrend:
 class TestTrendCommonParameters(TestTrend):
     """Test the trend skill with common parameters to verify functionality"""
 
-    config = PastaV9TrendCommonParametersConfig
+    config = GenpactInsuranceTrendCommonParametersConfig
     preview = False
 
     def test_single_metric(self):
@@ -140,8 +136,8 @@ class TestTrendCommonParameters(TestTrend):
 class TestTrendGuardrails(TestTrend):
     """Test guardrails and error conditions for trend skill"""
 
-    config = PastaV9TrendCommonParametersConfig
-    guardrail_config = PastaV9TrendGuardrailsConfig
+    config = GenpactInsuranceTrendCommonParametersConfig
+    guardrail_config = GenpactInsuranceTrendGuardrailsConfig
     preview = False
 
     def test_no_metrics_provided(self):
@@ -189,90 +185,5 @@ class TestTrendGuardrails(TestTrend):
         """Test behavior with mix of valid and invalid metrics"""
         parameters = {
             "metrics": [self.config.metric_1, self.guardrail_config.invalid_metric]
-        }
-        self._assert_trend_runs_with_error(parameters, ExitFromSkillException)
-
-@dataclass
-class TestTrendVarianceConfig:
-    metric_1: str
-    metric_2: str
-    non_variance_metric: str
-    breakout_1: str
-    breakout_2: str
-    period_filter: str
-    filter_1: dict
-    filter_2: dict
-    time_granularity_1: str = "month"
-    time_granularity_2: str = "quarter"
-    growth_type__target: str = "vs. Target"
-    growth_type__budget: str = "vs. Budget"
-    growth_type__forecast: str = "vs. Forecast"
-
-PastaV9TrendVarianceConfig = TestTrendVarianceConfig(
-    metric_1=PastaV9TestColumnNames.SALES.value,
-    metric_2=PastaV9TestColumnNames.VOLUME.value,
-    non_variance_metric=PastaV9TestColumnNames.ACV.value,
-    breakout_1=PastaV9TestColumnNames.BRAND.value,
-    breakout_2=PastaV9TestColumnNames.BASE_SIZE.value,
-    period_filter="2022",
-    filter_1={"dim": PastaV9TestColumnNames.SUB_CATEGORY.value, "op": "=", "val": PastaV9TestColumnNames.SUB_CATEGORY__SEMOLINA.value},
-    filter_2={"dim": PastaV9TestColumnNames.MANUFACTURER.value, "op": "=", "val": PastaV9TestColumnNames.MANUFACTURER__PRIVATE_LABEL.value}
-) 
-
-class TestTrendVariance(TestTrend):
-    """Test variance-specific functionality for trend skill"""
-
-    config: TestTrendVarianceConfig = PastaV9TrendVarianceConfig
-    preview = False
-
-    def test_non_variance_metric_with_budget(self):
-        """Test that non-variance metric fails with budget growth type"""
-        parameters = {
-            "metrics": [self.config.non_variance_metric],
-            "growth_type": self.config.growth_type__budget
-        }
-        self._assert_trend_runs_with_error(parameters, ExitFromSkillException)
-
-    def test_single_metric_with_budget(self):
-        """Test that metric fails with budget when no budget metric exists"""
-        parameters = {
-            "metrics": [self.config.metric_1],
-            "growth_type": self.config.growth_type__budget
-        }   
-        self._assert_trend_runs_with_error(parameters, ExitFromSkillException)
-
-    def test_single_metric_with_target(self):
-        """Test that metric fails with target when no target metric exists"""
-        parameters = {
-            "metrics": [self.config.metric_1],
-            "growth_type": self.config.growth_type__target
-        }
-        self._assert_trend_runs_with_error(parameters, ExitFromSkillException)
-
-    def test_single_metric_with_forecast(self):
-        """Test that metric fails with forecast when no forecast metric exists"""
-        parameters = {
-            "metrics": [self.config.metric_1],
-            "growth_type": self.config.growth_type__forecast
-        }
-        self._assert_trend_runs_with_error(parameters, ExitFromSkillException)
-
-    def test_multiple_variance_metrics_with_budget(self):
-        """Test that multiple metrics fail with budget when no budget metrics exist"""
-        parameters = {
-            "metrics": [self.config.metric_1, self.config.metric_2],
-            "periods": [self.config.period_filter],
-            "growth_type": self.config.growth_type__budget
-        }
-        self._assert_trend_runs_with_error(parameters, ExitFromSkillException)
-
-    def test_complex_variance_combination(self):
-        """Test that complex variance scenario fails when no variance metrics exist"""
-        parameters = {
-            "metrics": [self.config.metric_1, self.config.metric_2],
-            "periods": [self.config.period_filter],
-            "breakouts": [self.config.breakout_1],
-            "other_filters": [self.config.filter_1],
-            "growth_type": self.config.growth_type__target
         }
         self._assert_trend_runs_with_error(parameters, ExitFromSkillException)

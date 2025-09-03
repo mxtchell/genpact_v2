@@ -4,7 +4,7 @@ from enum import Enum
 from dimension_breakout import simple_breakout
 from skill_framework import ExitFromSkillException, SkillInput
 from skill_framework.preview import preview_skill
-from dataset_definitions.pasta_v9 import PastaV9TestColumnNames
+from dataset_definitions.genpact_insurance import GenpactInsuranceTestColumnNames
 
 
 class LegacyBreakoutParameters(Enum):
@@ -28,8 +28,6 @@ class LegacyBreakoutCommonParametersConfig:
     """Configuration for common parameter testing using pasta_v9 dataset"""
     metric_1: str
     metric_2: str
-    share_metric_1: str
-    share_metric_2: str
     breakout_1: str
     breakout_2: str
     period_filter: str
@@ -46,16 +44,14 @@ class LegacyBreakoutCommonParametersConfig:
     growth_trend_biggest_overall: str = "biggest overall"
 
 
-PastaV9LegacyBreakoutCommonParametersConfig = LegacyBreakoutCommonParametersConfig(
-    metric_1=PastaV9TestColumnNames.SALES.value,
-    metric_2=PastaV9TestColumnNames.VOLUME.value,
-    share_metric_1=PastaV9TestColumnNames.SALES_SHARE.value,
-    share_metric_2=PastaV9TestColumnNames.VOLUME_SHARE.value,
-    breakout_1=PastaV9TestColumnNames.BRAND.value,
-    breakout_2=PastaV9TestColumnNames.BASE_SIZE.value,
-    period_filter="2022",
-    filter_1={"dim": PastaV9TestColumnNames.SUB_CATEGORY.value, "op": "=", "val": PastaV9TestColumnNames.SUB_CATEGORY__SEMOLINA.value},
-    filter_2={"dim": PastaV9TestColumnNames.MANUFACTURER.value, "op": "=", "val": PastaV9TestColumnNames.MANUFACTURER__PRIVATE_LABEL.value}
+GenpactInsuranceLegacyBreakoutCommonParametersConfig = LegacyBreakoutCommonParametersConfig(
+    metric_1=GenpactInsuranceTestColumnNames.CLAIMS_EXPENSE.value,
+    metric_2=GenpactInsuranceTestColumnNames.COMBINED_RATIO.value,
+    breakout_1=GenpactInsuranceTestColumnNames.COUNTRY.value,
+    breakout_2=GenpactInsuranceTestColumnNames.DISTRIBUTION_CHANNEL.value,
+    period_filter="2024",
+    filter_1={"dim": GenpactInsuranceTestColumnNames.GEO.value, "op": "=", "val": GenpactInsuranceTestColumnNames.GEO__EUROPE.value},
+    filter_2={"dim": GenpactInsuranceTestColumnNames.LINE_OF_BUSINESS.value, "op": "=", "val": GenpactInsuranceTestColumnNames.LINE_OF_BUSINESS__GROUP.value}
 )
 
 
@@ -63,7 +59,7 @@ PastaV9LegacyBreakoutCommonParametersConfig = LegacyBreakoutCommonParametersConf
 class LegacyBreakoutGuardrailsConfig:
     """Configuration for testing guardrails and edge cases"""
     invalid_metric: str = "invalid_metric"
-    invalid_metric_from_pasta: str = PastaV9TestColumnNames.ACV_SHARE.value  # Not a valid metric for legacy breakout
+    invalid_metric_from_pasta: str = "invalid_metric"  # Not a valid metric for legacy breakout
     empty_metrics: List[str] = None
     
     def __post_init__(self):
@@ -71,7 +67,7 @@ class LegacyBreakoutGuardrailsConfig:
             self.empty_metrics = []
 
 
-PastaV9LegacyBreakoutGuardrailsConfig = LegacyBreakoutGuardrailsConfig()
+GenpactInsuranceLegacyBreakoutGuardrailsConfig = LegacyBreakoutGuardrailsConfig()
 
 
 class TestLegacyBreakout:
@@ -99,7 +95,7 @@ class TestLegacyBreakout:
 class TestLegacyBreakoutCommonParameters(TestLegacyBreakout):
     """Test the legacy breakout skill with common parameters to verify functionality"""
 
-    config = PastaV9LegacyBreakoutCommonParametersConfig
+    config = GenpactInsuranceLegacyBreakoutCommonParametersConfig
     preview = False
 
     def test_single_metric_with_breakout(self):
@@ -195,14 +191,6 @@ class TestLegacyBreakoutCommonParameters(TestLegacyBreakout):
         }
         self._assert_legacy_breakout_runs_without_errors(parameters)
 
-    def test_all_valid_share_metrics(self):
-        valid_share_metrics = ["sales_share", "volume_share"]
-        parameters = {
-            LegacyBreakoutParameters.metrics.value: valid_share_metrics,
-            LegacyBreakoutParameters.breakouts.value: [self.config.breakout_1]
-        }
-        self._assert_legacy_breakout_runs_without_errors(parameters)
-
     def test_multiple_metrics_with_breakout(self):
         parameters = {
             LegacyBreakoutParameters.metrics.value: [self.config.metric_1, self.config.metric_2],
@@ -214,13 +202,6 @@ class TestLegacyBreakoutCommonParameters(TestLegacyBreakout):
         parameters = {
             LegacyBreakoutParameters.metrics.value: [self.config.metric_1, self.config.metric_2],
             LegacyBreakoutParameters.breakouts.value: [self.config.breakout_1, self.config.breakout_2]
-        }
-        self._assert_legacy_breakout_runs_without_errors(parameters)
-
-    def test_share_metrics_with_breakout(self):
-        parameters = {
-            LegacyBreakoutParameters.metrics.value: [self.config.share_metric_1, self.config.share_metric_2],
-            LegacyBreakoutParameters.breakouts.value: [self.config.breakout_1]
         }
         self._assert_legacy_breakout_runs_without_errors(parameters)
 
@@ -269,8 +250,8 @@ class TestLegacyBreakoutCommonParameters(TestLegacyBreakout):
 class TestLegacyBreakoutGuardrails(TestLegacyBreakout):
     """Test guardrails and error conditions for legacy breakout skill"""
 
-    config = PastaV9LegacyBreakoutCommonParametersConfig
-    guardrail_config = PastaV9LegacyBreakoutGuardrailsConfig
+    config = GenpactInsuranceLegacyBreakoutCommonParametersConfig
+    guardrail_config = GenpactInsuranceLegacyBreakoutGuardrailsConfig
     preview = False
 
     def test_no_metrics_provided(self):

@@ -62,7 +62,7 @@ exceptiongroup==1.2.2
     #   pytest
 fastapi[standard]==0.116.1
     # via skill-framework
-fastapi-cli[standard]==0.0.8
+fastapi-cli[standard]==0.0.10
     # via fastapi
 fastapi-cloud-cli==0.1.5
     # via fastapi-cli
@@ -205,7 +205,7 @@ rich-toolkit==0.15.0
     #   fastapi-cloud-cli
 rignore==0.6.4
     # via fastapi-cloud-cli
-sentry-sdk==2.35.1
+sentry-sdk==2.35.2
     # via fastapi-cloud-cli
 sgqlc==16.4
     # via
@@ -246,7 +246,7 @@ starlette==0.47.1
     #   fastapi
 tomli==2.2.1
     # via pytest
-typer==0.16.1
+typer==0.17.3
     # via
     #   fastapi-cli
     #   fastapi-cloud-cli
