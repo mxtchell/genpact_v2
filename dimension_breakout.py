@@ -5,7 +5,8 @@ import logging
 from types import SimpleNamespace
 
 import jinja2
-from ar_analytics import BreakoutAnalysis, BreakoutAnalysisTemplateParameterSetup, ArUtils
+from ar_analytics import BreakoutAnalysisTemplateParameterSetup, ArUtils
+from analysis_class_overrides.dimension_breakout import InsuranceLegacyBreakout
 from ar_analytics.defaults import dimension_breakout_config, default_table_layout, get_table_layout_vars, \
     default_bridge_chart_viz, default_ppt_table_layout
 from ar_analytics.helpers.df_meta_util import apply_metadata_to_layout_element
@@ -112,7 +113,7 @@ def simple_breakout(parameters: SkillInput):
 
     env = SimpleNamespace(**param_dict)
     BreakoutAnalysisTemplateParameterSetup(env=env)
-    env.ba = BreakoutAnalysis.from_env(env=env)
+    env.ba = InsuranceLegacyBreakout.from_env(env=env)
     _ = env.ba.run_from_env()
 
     tables = env.ba.get_display_tables()
