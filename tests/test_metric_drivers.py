@@ -4,7 +4,7 @@ from enum import Enum
 from metric_drivers import simple_metric_driver
 from skill_framework import ExitFromSkillException, SkillInput
 from skill_framework.preview import preview_skill
-from dataset_definitions.pasta_v9 import PastaV9TestColumnNames
+from dataset_definitions.genpact_insurance import GenpactInsuranceTestColumnNames
 
 
 class MetricDriversParameters(Enum):
@@ -23,11 +23,9 @@ class MetricDriversParameters(Enum):
 
 @dataclass
 class MetricDriversCommonParametersConfig:
-    """Configuration for common parameter testing using pasta_v9 dataset"""
+    """Configuration for common parameter testing using genpact_insurance dataset"""
     metric_1: str
     metric_2: str
-    share_metric_1: str
-    share_metric_2: str
     breakout_1: str
     breakout_2: str
     period_filter: str
@@ -37,16 +35,14 @@ class MetricDriversCommonParametersConfig:
     growth_type_pop: str = "P/P"
 
 
-PastaV9MetricDriversCommonParametersConfig = MetricDriversCommonParametersConfig(
-    metric_1=PastaV9TestColumnNames.SALES.value,
-    metric_2=PastaV9TestColumnNames.ACV.value,
-    share_metric_1=PastaV9TestColumnNames.SALES_SHARE.value,
-    share_metric_2=PastaV9TestColumnNames.VOLUME_SHARE.value,
-    breakout_1=PastaV9TestColumnNames.BRAND.value,
-    breakout_2=PastaV9TestColumnNames.BASE_SIZE.value,
-    period_filter="2023",
-    filter_1={"dim": PastaV9TestColumnNames.SUB_CATEGORY.value, "op": "=", "val": PastaV9TestColumnNames.SUB_CATEGORY__SEMOLINA.value},
-    filter_2={"dim": PastaV9TestColumnNames.MANUFACTURER.value, "op": "=", "val": PastaV9TestColumnNames.MANUFACTURER__PRIVATE_LABEL.value}
+GenpactInsuranceMetricDriversCommonParametersConfig = MetricDriversCommonParametersConfig(
+    metric_1=GenpactInsuranceTestColumnNames.CLAIMS_EXPENSE.value,
+    metric_2=GenpactInsuranceTestColumnNames.COMBINED_RATIO.value,
+    breakout_1=GenpactInsuranceTestColumnNames.COUNTRY.value,
+    breakout_2=GenpactInsuranceTestColumnNames.DISTRIBUTION_CHANNEL.value,
+    period_filter="Apr 2025",
+    filter_1={"dim": GenpactInsuranceTestColumnNames.GEO.value, "op": "=", "val": GenpactInsuranceTestColumnNames.GEO__EUROPE.value},
+    filter_2={"dim": GenpactInsuranceTestColumnNames.LINE_OF_BUSINESS.value, "op": "=", "val": GenpactInsuranceTestColumnNames.LINE_OF_BUSINESS__GROUP.value}
 )
 
 
@@ -62,15 +58,15 @@ class MetricDriversGuardrailsConfig:
     def __post_init__(self):
         if self.too_many_breakouts is None:
             self.too_many_breakouts = [
-                PastaV9TestColumnNames.BRAND.value,
-                PastaV9TestColumnNames.BASE_SIZE.value,
-                PastaV9TestColumnNames.MANUFACTURER.value,
-                PastaV9TestColumnNames.SUB_CATEGORY.value,
+                GenpactInsuranceTestColumnNames.COUNTRY.value,
+                GenpactInsuranceTestColumnNames.DISTRIBUTION_CHANNEL.value,
+                GenpactInsuranceTestColumnNames.LINE_OF_BUSINESS.value,
+                GenpactInsuranceTestColumnNames.GEO.value,
                 "excessive_breakout"
             ]
 
 
-PastaV9MetricDriversGuardrailsConfig = MetricDriversGuardrailsConfig()
+GenpactInsuranceMetricDriversGuardrailsConfig = MetricDriversGuardrailsConfig()
 
 
 class TestMetricDrivers:
@@ -100,7 +96,7 @@ class TestMetricDrivers:
 class TestMetricDriversCommonParameters(TestMetricDrivers):
     """Test the metric drivers skill with common parameters to verify functionality"""
 
-    config = PastaV9MetricDriversCommonParametersConfig
+    config = GenpactInsuranceMetricDriversCommonParametersConfig
     preview = False
 
     def test_single_metric_with_period(self):
@@ -211,8 +207,8 @@ class TestMetricDriversCommonParameters(TestMetricDrivers):
 class TestMetricDriversGuardrails(TestMetricDrivers):
     """Test guardrails and error conditions for metric drivers skill"""
 
-    config = PastaV9MetricDriversCommonParametersConfig
-    guardrail_config = PastaV9MetricDriversGuardrailsConfig
+    config = GenpactInsuranceMetricDriversCommonParametersConfig
+    guardrail_config = GenpactInsuranceMetricDriversGuardrailsConfig
     preview = False
 
     def test_no_metric_provided(self):
@@ -245,14 +241,6 @@ class TestMetricDriversGuardrails(TestMetricDrivers):
         }
         self._assert_metric_drivers_runs_with_error(parameters, ExitFromSkillException)
 
-    def test_share_metrics_not_supported(self):
-        parameters = {
-            MetricDriversParameters.metric.value: self.config.share_metric_1,
-            MetricDriversParameters.periods.value: [self.config.period_filter],
-            MetricDriversParameters.breakouts.value: [self.config.breakout_1]
-        }
-        self._assert_metric_drivers_runs_with_error(parameters, ExitFromSkillException)
-
     def test_null_metric(self):
         parameters = {
             MetricDriversParameters.metric.value: None,
@@ -276,4 +264,3 @@ class TestMetricDriversGuardrails(TestMetricDrivers):
             MetricDriversParameters.breakouts.value: [self.config.breakout_1]
         }
         self._assert_metric_drivers_runs_with_error(parameters, ExitFromSkillException)
-
