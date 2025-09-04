@@ -5,7 +5,8 @@ import logging
 from types import SimpleNamespace
 
 import jinja2
-from ar_analytics import AdvanceTrend, TrendTemplateParameterSetup, ArUtils
+from ar_analytics import TrendTemplateParameterSetup, ArUtils
+from analysis_class_overrides.trend import InsuranceAdvanceTrend
 from ar_analytics.defaults import trend_analysis_config, default_trend_chart_layout, default_table_layout, \
     get_table_layout_vars, default_ppt_trend_chart_layout, default_ppt_table_layout
 from skill_framework import SkillVisualization, skill, SkillParameter, SkillInput, SkillOutput, \
@@ -116,7 +117,7 @@ def trend(parameters: SkillInput):
 
     env = SimpleNamespace(**param_dict)
     TrendTemplateParameterSetup(env=env)
-    env.trend = AdvanceTrend.from_env(env=env)
+    env.trend = InsuranceAdvanceTrend.from_env(env=env)
     df = env.trend.run_from_env()
     param_info = [ParameterDisplayDescription(key=k, value=v) for k, v in env.trend.paramater_display_infomation.items()]
     tables = [env.trend.display_dfs.get("Metrics Table")]

@@ -7,7 +7,8 @@ from skill_framework.preview import preview_skill
 from skill_framework.skills import ExportData
 from skill_framework.layouts import wire_layout
 
-from ar_analytics import DriverAnalysis, DriverAnalysisTemplateParameterSetup, ArUtils
+from ar_analytics import DriverAnalysisTemplateParameterSetup, ArUtils
+from analysis_class_overrides.metric_drivers import InsuranceDriverAnalysis
 from ar_analytics.defaults import metric_driver_analysis_config, default_table_layout, get_table_layout_vars
 
 import jinja2
@@ -93,7 +94,7 @@ def simple_metric_driver(parameters: SkillInput):
 
     env = SimpleNamespace(**param_dict)
     DriverAnalysisTemplateParameterSetup(env=env)
-    env.da = DriverAnalysis.from_env(env=env)
+    env.da = InsuranceDriverAnalysis.from_env(env=env)
 
     _ = env.da.run_from_env()
 
