@@ -207,6 +207,8 @@ def render_layout(charts, tables, title, subtitle, insights_dfs, warnings, max_p
             if series is not None:
                 for idx in range(len(series)):
                     if 'dataLabels' in series[idx]:
+                        if isinstance(series[idx]['dataLabels'], tuple): # incorrect typing for this type, will fix in ar analytics
+                            series[idx]['dataLabels'] = series[idx]['dataLabels'][0]
                         series[idx]['dataLabels']['enabled'] = False
                 chart_vars[f"{prefix}series"] = series
 
