@@ -39,7 +39,7 @@ class InsuranceDriverAnalysis(DriverAnalysis):
                 "name": rename_dict[col],
                 "data": self.helper.replace_nans_with_string_nan(raw_b_df[col].tolist()),
                 "dataLabels": {
-                    "enabled": True,
+                    "enabled": False,
                     "format": formatter.get('point_y_format')
                 },
                 "tooltip": {

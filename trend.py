@@ -200,11 +200,19 @@ def render_layout(charts, tables, title, subtitle, insights_dfs, warnings, max_p
     viz = []
     slides = []
     for name, chart_vars in charts.items():
+
+        prefixes = ["absolute_", "growth_", "difference_"]
+        for prefix in prefixes:
+            series = chart_vars.get(f"{prefix}series")
+            if series is not None:
+                for idx in range(len(series)):
+                    if 'dataLabels' in series[idx]:
+                        series[idx]['dataLabels']['enabled'] = False
+                chart_vars[f"{prefix}series"] = series
+
         chart_vars["footer"] = f"*{chart_vars['footer']}" if chart_vars.get('footer') else "No additional info."
         rendered = wire_layout(json.loads(chart_viz_layout), {**tab_vars, **chart_vars})
         viz.append(SkillVisualization(title=name, layout=rendered))
-
-        prefixes = ["absolute_", "growth_", "difference_"]
 
         for prefix in prefixes:
             if (prefix in ["growth_", "difference_"] and

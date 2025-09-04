@@ -27,7 +27,7 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
             "name": metric,
             "data": self.helper.replace_nans_with_string_nan(raw_b_df[metric].tolist()),
             "dataLabels": {
-                "enabled": True,
+                "enabled": False,
                 "format": formatter.get('point_y_format')
             },
             "tooltip": {
