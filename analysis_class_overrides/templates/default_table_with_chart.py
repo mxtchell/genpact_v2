@@ -308,7 +308,7 @@ default_table_with_chart_layout = """
 						"polar": false
 					},
 					"title": {
-						"text": "Sample Highcharts",
+						"text": "",
 						"style": {
 							"fontSize": "20px"
 						}
