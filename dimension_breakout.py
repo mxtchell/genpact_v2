@@ -7,8 +7,9 @@ from types import SimpleNamespace
 import jinja2
 from ar_analytics import BreakoutAnalysisTemplateParameterSetup, ArUtils
 from analysis_class_overrides.dimension_breakout import InsuranceLegacyBreakout
-from ar_analytics.defaults import dimension_breakout_config, default_table_layout, get_table_layout_vars, \
+from ar_analytics.defaults import dimension_breakout_config, get_table_layout_vars, \
     default_bridge_chart_viz, default_ppt_table_layout
+from analysis_class_overrides.templates.default_table_with_chart import default_table_with_chart_layout
 from ar_analytics.helpers.df_meta_util import apply_metadata_to_layout_element
 from skill_framework import SkillInput, SkillVisualization, skill, SkillParameter, SkillOutput, SuggestedQuestion, \
     ParameterDisplayDescription
@@ -87,7 +88,7 @@ logger = logging.getLogger(__name__)
             name="table_viz_layout",
             parameter_type="visualization",
             description="Table Viz Layout",
-            default_value=default_table_layout
+            default_value=default_table_with_chart_layout
         ),
         SkillParameter(
             name="bridge_chart_viz_layout",
@@ -177,15 +178,18 @@ def render_layout(tables, bridge_chart_data, title, subtitle, insights_dfs, warn
 
     viz_layout = json.loads(viz_layout)
 
-    for name, table in tables.items():
-        export_data[name] = table
-        dim_note = find_footnote(footnotes, table)
+    for name, table_info in tables.items():
+
+        table_df = table_info["df"]
+        export_data[name] = table_df
+        dim_note = find_footnote(footnotes, table_df)
         hide_footer = False if dim_note else True
-        table_vars = get_table_layout_vars(table)
+        table_vars = get_table_layout_vars(table_df)
+        table_vars = {**table_vars, **table_info["chart_vars"]}
         table_vars["hide_footer"] = hide_footer
         table_vars["footer"] = f"*{dim_note.strip()}" if dim_note else "No additional info."
         meta_viz_layout = apply_metadata_to_layout_element(viz_layout, "DataTable0",
-                                                           {"sourceDataframeId": table.max_metadata.get_id()})
+                                                           {"sourceDataframeId": table_df.max_metadata.get_id()})
         rendered = wire_layout(meta_viz_layout, {**general_vars, **table_vars})
         viz_list.append(SkillVisualization(title=name, layout=rendered))
         if table_ppt_layout is not None:

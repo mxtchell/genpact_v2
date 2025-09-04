@@ -9,7 +9,8 @@ from skill_framework.layouts import wire_layout
 
 from ar_analytics import DriverAnalysisTemplateParameterSetup, ArUtils
 from analysis_class_overrides.metric_drivers import InsuranceDriverAnalysis
-from ar_analytics.defaults import metric_driver_analysis_config, default_table_layout, get_table_layout_vars
+from analysis_class_overrides.templates.default_table_with_chart import default_table_with_chart_layout
+from ar_analytics.defaults import metric_driver_analysis_config, get_table_layout_vars
 
 import jinja2
 import logging
@@ -80,8 +81,8 @@ logger = logging.getLogger(__name__)
             name="table_viz_layout",
             parameter_type="visualization",
             description="Table Viz Layout",
-            default_value=default_table_layout
-        )
+            default_value=default_table_with_chart_layout
+        ),
     ]
 )
 def simple_metric_driver(parameters: SkillInput):
@@ -101,7 +102,7 @@ def simple_metric_driver(parameters: SkillInput):
     results = env.da.get_display_tables()
 
     tables = {
-        "Metrics": results['viz_metric_df']
+        "Metrics": {"df": results['viz_metric_df']}
     }
     tables.update(results['viz_breakout_dfs'])
 
@@ -149,11 +150,16 @@ def render_layout(tables, title, subtitle, insights_dfs, warnings, max_prompt, i
                     "exec_summary": insights if insights else "No Insights.",
                     "warning": warnings}
 
-    for name, table in tables.items():
-        export_data[name] = table
+    for name, table_info in tables.items():
+        table_df = table_info["df"]
+        export_data[name] = table_df
         hide_footer = True
-        table_vars = get_table_layout_vars(table, sparkline_col="sparkline")
+        table_vars = get_table_layout_vars(table_df, sparkline_col="sparkline")
         table_vars["hide_footer"] = hide_footer
+        if "chart_vars" not in table_info:
+            table_vars["hide_chart"] = True
+        else:
+            table_vars = {**table_vars, **table_info["chart_vars"]}
         rendered = wire_layout(json.loads(viz_layout), {**general_vars, **table_vars})
         viz_list.append(SkillVisualization(title=name, layout=rendered))
 
