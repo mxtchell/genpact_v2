@@ -3,9 +3,9 @@ from types import SimpleNamespace
 
 import pandas as pd
 from skill_framework import SkillInput, SkillVisualization, skill, SkillParameter, SkillOutput, ParameterDisplayDescription
-from skill_framework.preview import preview_skill
 from skill_framework.skills import ExportData
 from skill_framework.layouts import wire_layout
+from analysis_class_overrides.insurance_utilities import _filter_metric_hierarchy_by_groups
 
 from ar_analytics import DriverAnalysisTemplateParameterSetup, ArUtils
 from analysis_class_overrides.metric_drivers import InsuranceDriverAnalysis
@@ -95,6 +95,9 @@ def simple_metric_driver(parameters: SkillInput):
 
     env = SimpleNamespace(**param_dict)
     DriverAnalysisTemplateParameterSetup(env=env)
+    _, metric_hierarchy = env.sp.data.get_metric_hierarchy()
+    metric_hierarchy_groups = env.sp.data.get_metadata()["misc_info"]["metric_hierarchy_groups"]
+    env.driver_analysis_parameters["driver_metrics"] = _filter_metric_hierarchy_by_groups(env.metric, metric_hierarchy, metric_hierarchy_groups)
     env.da = InsuranceDriverAnalysis.from_env(env=env)
 
     _ = env.da.run_from_env()
@@ -165,17 +168,3 @@ def render_layout(tables, title, subtitle, insights_dfs, warnings, max_prompt, i
 
     return viz_list, insights, max_response_prompt, export_data
 
-if __name__ == '__main__':
-    skill_input: SkillInput = simple_metric_driver.create_input(
-        arguments={
-  "breakouts": [
-    "brand"
-  ],
-  "metric": "sales",
-  "periods": [
-    "2022",
-    "2023"
-  ]
-})
-    out = simple_metric_driver(skill_input)
-    preview_skill(simple_metric_driver, out)
