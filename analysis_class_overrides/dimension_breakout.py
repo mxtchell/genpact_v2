@@ -70,13 +70,18 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
                     current_y = 0
                 else:
                     if is_percentage:
-                        # Handle percentage strings like "63.12%" 
+                        # Handle percentage data - could be strings like "63.12%" or decimals like 0.6312
                         if isinstance(current_value, str) and "%" in current_value:
                             current_formatted = current_value  # Keep original formatting
                             current_y = float(current_value.replace("%", ""))  # Convert to numeric
+                        elif isinstance(current_value, (int, float)):
+                            # Convert decimal to percentage (0.6312 -> 63.12)
+                            percentage_value = current_value * 100
+                            current_formatted = f"{percentage_value:.2f}%"
+                            current_y = percentage_value
                         else:
-                            current_formatted = f"{current_value:.1f}%" if isinstance(current_value, (int, float)) else str(current_value)
-                            current_y = float(current_value) if isinstance(current_value, (int, float)) else 0
+                            current_formatted = str(current_value)
+                            current_y = 0
                     else:
                         if is_currency:
                             current_formatted = f"${genpact_format_number(current_value)}"
@@ -98,13 +103,24 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
                         previous_y = 0
                     else:
                         if is_percentage:
-                            # Handle percentage strings like "62.67%"
+                            # Handle percentage data - could be strings like "62.67%" or decimals/strings like 0.6267 or "0.626748"
                             if isinstance(previous_value, str) and "%" in previous_value:
                                 previous_formatted = previous_value  # Keep original formatting
                                 previous_y = float(previous_value.replace("%", ""))  # Convert to numeric
+                            elif isinstance(previous_value, str):
+                                # Handle string decimals like "0.626748"
+                                decimal_value = float(previous_value)
+                                percentage_value = decimal_value * 100
+                                previous_formatted = f"{percentage_value:.2f}%"
+                                previous_y = percentage_value
+                            elif isinstance(previous_value, (int, float)):
+                                # Convert decimal to percentage (0.6267 -> 62.67)
+                                percentage_value = previous_value * 100
+                                previous_formatted = f"{percentage_value:.2f}%"
+                                previous_y = percentage_value
                             else:
-                                previous_formatted = f"{previous_value:.1f}%" if isinstance(previous_value, (int, float)) else str(previous_value)
-                                previous_y = float(previous_value) if isinstance(previous_value, (int, float)) else 0
+                                previous_formatted = str(previous_value)
+                                previous_y = 0
                         else:
                             if is_currency:
                                 previous_formatted = f"${genpact_format_number(previous_value)}"
