@@ -14,23 +14,98 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
     def _create_breakout_chart_vars(self, raw_b_df: pd.DataFrame, dim: str, metric: str):
 
         categories = raw_b_df[dim].tolist()
-        formatter = self.ar_utils.python_to_highcharts_format(self.format_dict[metric])
-
-        y_axis = [{
-            "title": "",
-            "labels": {
-                "format": formatter.get('value_format')
+        
+        # Get the metric format to determine if it's a percentage
+        metric_format = self.format_dict.get(metric, "")
+        is_percentage = "%" in metric_format
+        is_currency = "$" in metric_format
+        
+        # Create custom formatter for better number display
+        if is_percentage:
+            # Keep percentage format as is
+            formatter = self.ar_utils.python_to_highcharts_format(metric_format)
+        else:
+            # Use abbreviated number format for large numbers
+            formatter = {
+                'value_format': '{value:,.0f}',  # Will be overridden by formatter function
+                'point_y_format': '{point.y:,.0f}'  # Will be overridden by formatter function
             }
-        }]
+
+        # Custom formatter function for y-axis labels
+        if not is_percentage:
+            y_axis = [{
+                "title": "",
+                "labels": {
+                    "formatter": """function() {
+                        var value = Math.abs(this.value);
+                        var sign = this.value < 0 ? '-' : '';
+                        var currency = '""" + ("$" if is_currency else "") + """';
+                        
+                        if (value >= 1000000000) {
+                            return sign + currency + (value / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+                        } else if (value >= 1000000) {
+                            return sign + currency + (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+                        } else if (value >= 1000) {
+                            return sign + currency + (value / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+                        } else {
+                            return sign + currency + value.toFixed(0);
+                        }
+                    }"""
+                }
+            }]
+            
+            # Custom tooltip formatter
+            tooltip_formatter = """function() {
+                var value = Math.abs(this.y);
+                var sign = this.y < 0 ? '-' : '';
+                var currency = '""" + ("$" if is_currency else "") + """';
+                
+                var formattedValue;
+                if (value >= 1000000000) {
+                    formattedValue = sign + currency + (value / 1000000000).toFixed(2).replace(/\.00$/, '') + 'B';
+                } else if (value >= 1000000) {
+                    formattedValue = sign + currency + (value / 1000000).toFixed(2).replace(/\.00$/, '') + 'M';
+                } else if (value >= 1000) {
+                    formattedValue = sign + currency + (value / 1000).toFixed(2).replace(/\.00$/, '') + 'K';
+                } else {
+                    formattedValue = sign + currency + value.toFixed(0);
+                }
+                
+                return '<b>' + this.series.name + '</b>: ' + formattedValue;
+            }"""
+        else:
+            y_axis = [{
+                "title": "",
+                "labels": {
+                    "format": formatter.get('value_format')
+                }
+            }]
+            tooltip_formatter = None
 
         data = [{
             "name": metric,
             "data": self.helper.replace_nans_with_string_nan(raw_b_df[metric].tolist()),
             "dataLabels": {
                 "enabled": False,
-                "format": formatter.get('point_y_format')
+                "formatter": """function() {
+                    var value = Math.abs(this.y);
+                    var sign = this.y < 0 ? '-' : '';
+                    var currency = '""" + ("$" if is_currency else "") + """';
+                    
+                    if (value >= 1000000000) {
+                        return sign + currency + (value / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+                    } else if (value >= 1000000) {
+                        return sign + currency + (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+                    } else if (value >= 1000) {
+                        return sign + currency + (value / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+                    } else {
+                        return sign + currency + value.toFixed(0);
+                    }
+                }""" if not is_percentage else None
             },
             "tooltip": {
+                "pointFormatter": tooltip_formatter
+            } if tooltip_formatter else {
                 "pointFormat": "<b>{series.name}</b>: " + formatter.get('point_y_format')
             }
         }]
