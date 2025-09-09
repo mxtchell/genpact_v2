@@ -124,7 +124,7 @@ def simple_breakout(parameters: SkillInput):
     followups = env.ba.get_suggestions()
 
     viz, slides, insights, final_prompt, export_data = render_layout(tables,
-                                                            env.ba.get_display_bridge_charts(),
+                                                            None,  # Disable bridge chart
                                                             env.ba.title,
                                                             env.ba.subtitle,
                                                             insights_dfs,

@@ -312,9 +312,9 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
             "#82E0AA"   # Light forest green
         ]
         
-        # Current series with colorful bars
+        # Current series with colorful bars - use actual metric name
         current_series = {
-            "name": "Current",
+            "name": metric.replace(" (Current)", ""),
             "data": current_data,
             "colorByPoint": True,
             "colors": current_colors,
@@ -327,10 +327,10 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         }
         data.append(current_series)
         
-        # Previous series (if available) with complementary colors
+        # Previous series (if available) with complementary colors - use actual metric name
         if has_previous and previous_data:
             previous_series = {
-                "name": "Previous", 
+                "name": previous_metric.replace(" (Previous)", ""), 
                 "data": previous_data,
                 "colorByPoint": True,
                 "colors": previous_colors,
