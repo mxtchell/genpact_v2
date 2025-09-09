@@ -170,7 +170,7 @@ def render_layout(tables, bridge_chart_data, title, subtitle, insights_dfs, warn
     slides = []
     export_data = {}
 
-    general_vars = {"headline": title if title else "Total",
+    general_vars = {"headline": title.title() if title else "Total",
 					"sub_headline": subtitle or "Breakout Analysis",
 					"hide_growth_warning": False if warnings else True,
 					"exec_summary": insights if insights else "No Insights.",
