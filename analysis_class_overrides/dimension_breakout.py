@@ -30,66 +30,103 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         is_currency = "$" in metric_format
         logger.info(f"DEBUG** Metric format: {metric_format}, is_percentage: {is_percentage}, is_currency: {is_currency}")
         
-        # Prepare data with proper formatting like the working skills
-        raw_values = raw_b_df[metric].tolist()
-        logger.info(f"DEBUG** Raw values: {raw_values}")
-        chart_data = []
+        # Check for Previous period data to create grouped chart
+        previous_metric = metric.replace("(Current)", "(Previous)")
+        has_previous = previous_metric in raw_b_df.columns
         
-        for i, (category, raw_value) in enumerate(zip(categories, raw_values)):
+        logger.info(f"DEBUG** Previous metric: {previous_metric}, has_previous: {has_previous}")
+        
+        # Prepare Current data
+        current_values = raw_b_df[metric].tolist()
+        logger.info(f"DEBUG** Current values: {current_values}")
+        current_data = []
+        
+        # Prepare Previous data if available
+        previous_data = []
+        if has_previous:
+            previous_values = raw_b_df[previous_metric].tolist()
+            logger.info(f"DEBUG** Previous values: {previous_values}")
+        
+        for i, category in enumerate(categories):
             try:
-                logger.info(f"DEBUG** Processing item {i}: category='{category}', raw_value='{raw_value}', type={type(raw_value)}")
+                logger.info(f"DEBUG** Processing item {i}: category='{category}'")
                 
-                # Handle NaN values
-                if pd.isna(raw_value):
-                    logger.info(f"DEBUG** Item {i}: NaN value, using 0")
-                    chart_data.append({
-                        "name": category,
-                        "y": 0,
-                        "formatted": "N/A"
-                    })
-                    continue
-                
-                # Format the value using genpact_format_number like working skills
-                if is_percentage:
-                    # For percentages, keep original formatting
-                    formatted_value = f"{raw_value:.1f}%" if isinstance(raw_value, (int, float)) else str(raw_value)
-                    y_value = float(raw_value) if isinstance(raw_value, (int, float)) else 0
-                    logger.info(f"DEBUG** Item {i}: Percentage - formatted='{formatted_value}', y={y_value}")
-                    chart_data.append({
-                        "name": category,
-                        "y": y_value,
-                        "formatted": formatted_value
-                    })
+                # Process Current values
+                current_value = current_values[i]
+                if pd.isna(current_value):
+                    current_formatted = "N/A"
+                    current_y = 0
                 else:
-                    # For currency and regular numbers, use genpact formatting
-                    if is_currency:
-                        formatted_value = f"${genpact_format_number(raw_value)}"
+                    if is_percentage:
+                        current_formatted = f"{current_value:.1f}%" if isinstance(current_value, (int, float)) else str(current_value)
+                        current_y = float(current_value) if isinstance(current_value, (int, float)) else 0
                     else:
-                        formatted_value = genpact_format_number(raw_value)
+                        if is_currency:
+                            current_formatted = f"${genpact_format_number(current_value)}"
+                        else:
+                            current_formatted = genpact_format_number(current_value)
+                        current_y = float(current_value) if isinstance(current_value, (int, float)) else 0
+                
+                current_data.append({
+                    "name": category,
+                    "y": current_y,
+                    "formatted": current_formatted
+                })
+                
+                # Process Previous values if available
+                if has_previous:
+                    previous_value = previous_values[i]
+                    if pd.isna(previous_value):
+                        previous_formatted = "N/A"  
+                        previous_y = 0
+                    else:
+                        if is_percentage:
+                            previous_formatted = f"{previous_value:.1f}%" if isinstance(previous_value, (int, float)) else str(previous_value)
+                            previous_y = float(previous_value) if isinstance(previous_value, (int, float)) else 0
+                        else:
+                            if is_currency:
+                                previous_formatted = f"${genpact_format_number(previous_value)}"
+                            else:
+                                previous_formatted = genpact_format_number(previous_value)
+                            previous_y = float(previous_value) if isinstance(previous_value, (int, float)) else 0
                     
-                    y_value = float(raw_value) if isinstance(raw_value, (int, float)) else 0
-                    logger.info(f"DEBUG** Item {i}: Number - formatted='{formatted_value}', y={y_value}")
-                    chart_data.append({
+                    previous_data.append({
                         "name": category,
-                        "y": y_value,
-                        "formatted": formatted_value
+                        "y": previous_y,
+                        "formatted": previous_formatted
                     })
-                    
+                
+                logger.info(f"DEBUG** Item {i}: current='{current_formatted}', previous='{previous_formatted if has_previous else 'N/A'}'")
+                
             except Exception as e:
                 logger.error(f"DEBUG** Error processing item {i}: {e}")
                 # Fallback for any conversion issues
-                chart_data.append({
+                current_data.append({
                     "name": category,
                     "y": 0,
                     "formatted": "0"
                 })
+                if has_previous:
+                    previous_data.append({
+                        "name": category, 
+                        "y": 0,
+                        "formatted": "0"
+                    })
+        
+        # Use current_data for axis scaling calculations
+        chart_data = current_data
 
         logger.info(f"DEBUG** Final chart_data length: {len(chart_data)}")
         logger.info(f"DEBUG** Sample chart_data (first 3): {chart_data[:3]}")
 
         # Create Y-axis with M/K/B formatting by calculating ticks and labels
-        max_value = max([item.get('y', 0) for item in chart_data if isinstance(item.get('y'), (int, float))]) if chart_data else 0
-        min_value = min([item.get('y', 0) for item in chart_data if isinstance(item.get('y'), (int, float))]) if chart_data else 0
+        # Consider both Current and Previous data for scaling
+        all_values = [item.get('y', 0) for item in current_data if isinstance(item.get('y'), (int, float))]
+        if has_previous and previous_data:
+            all_values.extend([item.get('y', 0) for item in previous_data if isinstance(item.get('y'), (int, float))])
+        
+        max_value = max(all_values) if all_values else 0
+        min_value = min(all_values) if all_values else 0
         
         logger.info(f"DEBUG** Y-axis range: {min_value} to {max_value}")
         
@@ -171,12 +208,19 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
                     "labels": {"format": "${value}M"}
                 }]
             
-            # Scale down the chart data to match the axis
-            for item in chart_data:
+            # Scale down both current and previous data to match the axis  
+            for item in current_data:
                 if isinstance(item.get('y'), (int, float)):
                     item['y'] = item['y'] / 1000000  # Convert to millions
             
-            logger.info(f"DEBUG** Scaled chart data (first 3): {chart_data[:3]}")
+            if has_previous and previous_data:
+                for item in previous_data:
+                    if isinstance(item.get('y'), (int, float)):
+                        item['y'] = item['y'] / 1000000  # Convert to millions
+            
+            logger.info(f"DEBUG** Scaled current data (first 3): {current_data[:3]}")
+            if has_previous:
+                logger.info(f"DEBUG** Scaled previous data (first 3): {previous_data[:3]}")
             logger.info(f"DEBUG** Y-axis config: {y_axis}")
         else:
             # For other values, use simple formatting
@@ -185,33 +229,39 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
             else:
                 y_axis = [{"title": "", "labels": {"format": "{value:.0f}"}}]
         
-        # Build series data with better color palette - remove JS formatters
-        data = [{
-            "name": metric,
-            "data": chart_data,
+        # Build series data - create separate series for Current and Previous
+        data = []
+        
+        # Current series
+        current_series = {
+            "name": "Current",
+            "data": current_data,
+            "color": "#2E86C1",  # Professional blue
             "dataLabels": {
                 "enabled": False
             },
             "tooltip": {
                 "pointFormat": "<b>{series.name}</b>: {point.formatted}"
-            },
-            # Use a vibrant color palette instead of dark blue/black
-            "colorByPoint": True,
-            "colors": [
-                "#2E86C1",  # Professional blue (like working skills)
-                "#28B463",  # Green
-                "#F39C12",  # Orange
-                "#E74C3C",  # Red  
-                "#8E44AD",  # Purple (like working skills)
-                "#17A2B8",  # Teal
-                "#FFC107",  # Amber
-                "#DC3545",  # Crimson
-                "#20C997",  # Success green
-                "#6F42C1",  # Indigo
-                "#FD7E14",  # Bright orange
-                "#198754"   # Forest green
-            ]
-        }]
+            }
+        }
+        data.append(current_series)
+        
+        # Previous series (if available)
+        if has_previous and previous_data:
+            previous_series = {
+                "name": "Previous", 
+                "data": previous_data,
+                "color": "#95A5A6",  # Light gray for previous
+                "dataLabels": {
+                    "enabled": False
+                },
+                "tooltip": {
+                    "pointFormat": "<b>{series.name}</b>: {point.formatted}"
+                }
+            }
+            data.append(previous_series)
+        
+        logger.info(f"DEBUG** Created {len(data)} series: Current" + (", Previous" if has_previous else ""))
 
         chart_result = {
             "chart_categories": categories,
