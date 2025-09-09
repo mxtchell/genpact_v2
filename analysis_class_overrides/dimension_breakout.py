@@ -148,11 +148,26 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
             logger.info(f"DEBUG** Tick positions: {tick_positions}")
             logger.info(f"DEBUG** Tick labels: {tick_labels}")
             
+            # Use a JavaScript formatter function instead of categories
             y_axis = [{
                 "title": "",
                 "tickPositions": tick_positions,
-                "categories": tick_labels,
-                "labels": {"enabled": True}
+                "labels": {
+                    "formatter": """function() {
+                        var value = this.value;
+                        if (value >= 1000000000) {
+                            return '$' + (value / 1000000000).toFixed(1) + 'B';
+                        } else if (value >= 1000000) {
+                            return '$' + (value / 1000000).toFixed(0) + 'M';
+                        } else if (value >= 100000) {
+                            return '$' + (value / 1000).toFixed(0) + 'K';
+                        } else if (value >= 1000) {
+                            return '$' + (value / 1000).toFixed(0) + 'K';
+                        } else {
+                            return '$' + value.toFixed(0);
+                        }
+                    }"""
+                }
             }]
         else:
             # For other values, use simple formatting
