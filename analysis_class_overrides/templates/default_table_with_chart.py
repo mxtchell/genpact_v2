@@ -142,7 +142,11 @@ default_table_with_chart_layout = """
 				"name": "FlexContainer5",
 				"type": "FlexContainer",
 				"minHeight": "250px",
-				"direction": "row"
+				"direction": "row",
+				"style": {
+					"maxWidth": "90%",
+					"width": "90%"
+				}
 			},
 			{
 				"name": "FlexContainer4",
