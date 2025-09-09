@@ -185,13 +185,35 @@ def render_layout(tables, bridge_chart_data, title, subtitle, insights_dfs, warn
         dim_note = find_footnote(footnotes, table_df)
         hide_footer = False if dim_note else True
         table_vars = get_table_layout_vars(table_df)
+        logger.info(f"DEBUG** About to merge chart_vars into table_vars")
+        logger.info(f"DEBUG** table_info keys: {table_info.keys()}")
+        logger.info(f"DEBUG** chart_vars keys: {table_info['chart_vars'].keys() if 'chart_vars' in table_info else 'NO CHART_VARS'}")
+        
         table_vars = {**table_vars, **table_info["chart_vars"]}
         table_vars["hide_footer"] = hide_footer
         table_vars["footer"] = f"*{dim_note.strip()}" if dim_note else "No additional info."
+        
+        logger.info(f"DEBUG** After merging, table_vars keys: {list(table_vars.keys())}")
+        logger.info(f"DEBUG** chart_categories in table_vars: {'chart_categories' in table_vars}")
+        logger.info(f"DEBUG** chart_data in table_vars: {'chart_data' in table_vars}")
+        logger.info(f"DEBUG** chart_y_axis in table_vars: {'chart_y_axis' in table_vars}")
+        logger.info(f"DEBUG** About to apply metadata to layout")
         meta_viz_layout = apply_metadata_to_layout_element(viz_layout, "DataTable0",
                                                            {"sourceDataframeId": table_df.max_metadata.get_id()})
-        rendered = wire_layout(meta_viz_layout, {**general_vars, **table_vars})
-        viz_list.append(SkillVisualization(title=name, layout=rendered))
+        logger.info(f"DEBUG** About to wire_layout with general_vars + table_vars")
+        logger.info(f"DEBUG** Combined vars keys: {list({**general_vars, **table_vars}.keys())}")
+        
+        try:
+            rendered = wire_layout(meta_viz_layout, {**general_vars, **table_vars})
+            logger.info(f"DEBUG** wire_layout succeeded, type: {type(rendered)}")
+            viz_list.append(SkillVisualization(title=name, layout=rendered))
+            logger.info(f"DEBUG** Successfully added visualization: {name}")
+        except Exception as e:
+            logger.error(f"DEBUG** wire_layout FAILED for {name}: {e}")
+            logger.error(f"DEBUG** Error type: {type(e)}")
+            import traceback
+            logger.error(f"DEBUG** Full traceback: {traceback.format_exc()}")
+            raise e
         if table_ppt_layout is not None:
             slide = wire_layout(json.loads(table_ppt_layout), {**general_vars, **table_vars})
             slides.append(slide)

@@ -87,42 +87,11 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         logger.info(f"DEBUG** Final chart_data length: {len(chart_data)}")
         logger.info(f"DEBUG** Sample chart_data (first 3): {chart_data[:3]}")
 
-        # Use custom Y-axis formatter for better number display
-        if is_currency:
-            y_axis_formatter = """function() {
-                var value = Math.abs(this.value);
-                var sign = this.value < 0 ? '-' : '';
-                
-                if (value >= 1000000000) {
-                    return sign + '$' + (this.value / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
-                } else if (value >= 1000000) {
-                    return sign + '$' + (this.value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-                } else if (value >= 1000) {
-                    return sign + '$' + (this.value / 1000).toFixed(0) + 'K';
-                } else {
-                    return sign + '$' + this.value.toFixed(0);
-                }
-            }"""
-        else:
-            y_axis_formatter = """function() {
-                var value = Math.abs(this.value);
-                var sign = this.value < 0 ? '-' : '';
-                
-                if (value >= 1000000000) {
-                    return sign + (this.value / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
-                } else if (value >= 1000000) {
-                    return sign + (this.value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-                } else if (value >= 1000) {
-                    return sign + (this.value / 1000).toFixed(0) + 'K';
-                } else {
-                    return sign + this.value.toFixed(0);
-                }
-            }"""
-
+        # Use simple Y-axis format to avoid JS crashes
         y_axis = [{
             "title": "",
             "labels": {
-                "formatter": y_axis_formatter
+                "format": "${value:,.0f}" if is_currency else "{value:,.0f}"
             }
         }]
         
@@ -164,6 +133,11 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         logger.info(f"DEBUG** Final chart result keys: {chart_result.keys()}")
         logger.info(f"DEBUG** Chart categories count: {len(categories)}")
         logger.info(f"DEBUG** Chart data series count: {len(data)}")
+        logger.info(f"DEBUG** Y-axis config: {y_axis}")
+        logger.info(f"DEBUG** Full chart_data structure: {data}")
+        logger.info(f"DEBUG** Chart data first point: {data[0]['data'][0] if data and data[0]['data'] else 'NO DATA'}")
+        logger.info(f"DEBUG** Colors config: {data[0].get('colors', 'NO COLORS') if data else 'NO DATA ARRAY'}")
+        logger.info(f"DEBUG** ColorByPoint: {data[0].get('colorByPoint', 'NOT SET') if data else 'NO DATA ARRAY'}")
         logger.info(f"DEBUG** Finished _create_breakout_chart_vars successfully")
         
         return chart_result
