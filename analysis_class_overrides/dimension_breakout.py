@@ -87,11 +87,42 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         logger.info(f"DEBUG** Final chart_data length: {len(chart_data)}")
         logger.info(f"DEBUG** Sample chart_data (first 3): {chart_data[:3]}")
 
-        # Use simple chart configuration without complex JS formatters
+        # Use custom Y-axis formatter for better number display
+        if is_currency:
+            y_axis_formatter = """function() {
+                var value = Math.abs(this.value);
+                var sign = this.value < 0 ? '-' : '';
+                
+                if (value >= 1000000000) {
+                    return sign + '$' + (this.value / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+                } else if (value >= 1000000) {
+                    return sign + '$' + (this.value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+                } else if (value >= 1000) {
+                    return sign + '$' + (this.value / 1000).toFixed(0) + 'K';
+                } else {
+                    return sign + '$' + this.value.toFixed(0);
+                }
+            }"""
+        else:
+            y_axis_formatter = """function() {
+                var value = Math.abs(this.value);
+                var sign = this.value < 0 ? '-' : '';
+                
+                if (value >= 1000000000) {
+                    return sign + (this.value / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+                } else if (value >= 1000000) {
+                    return sign + (this.value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+                } else if (value >= 1000) {
+                    return sign + (this.value / 1000).toFixed(0) + 'K';
+                } else {
+                    return sign + this.value.toFixed(0);
+                }
+            }"""
+
         y_axis = [{
             "title": "",
             "labels": {
-                "format": "${value:,.0f}"
+                "formatter": y_axis_formatter
             }
         }]
         
