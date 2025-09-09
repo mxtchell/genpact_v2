@@ -13,22 +13,35 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
 
     def _create_breakout_chart_vars(self, raw_b_df: pd.DataFrame, dim: str, metric: str):
         from genpact_formatting import genpact_format_number
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"DEBUG** Starting _create_breakout_chart_vars for metric: {metric}")
+        logger.info(f"DEBUG** DataFrame shape: {raw_b_df.shape}")
+        logger.info(f"DEBUG** DataFrame columns: {raw_b_df.columns.tolist()}")
+        logger.info(f"DEBUG** Dim column: {dim}")
         
         categories = raw_b_df[dim].tolist()
+        logger.info(f"DEBUG** Categories: {categories}")
         
         # Get the metric format to determine if it's a percentage
         metric_format = self.format_dict.get(metric, "")
         is_percentage = "%" in metric_format
         is_currency = "$" in metric_format
+        logger.info(f"DEBUG** Metric format: {metric_format}, is_percentage: {is_percentage}, is_currency: {is_currency}")
         
         # Prepare data with proper formatting like the working skills
         raw_values = raw_b_df[metric].tolist()
+        logger.info(f"DEBUG** Raw values: {raw_values}")
         chart_data = []
         
         for i, (category, raw_value) in enumerate(zip(categories, raw_values)):
             try:
+                logger.info(f"DEBUG** Processing item {i}: category='{category}', raw_value='{raw_value}', type={type(raw_value)}")
+                
                 # Handle NaN values
                 if pd.isna(raw_value):
+                    logger.info(f"DEBUG** Item {i}: NaN value, using 0")
                     chart_data.append({
                         "name": category,
                         "y": 0,
@@ -40,9 +53,11 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
                 if is_percentage:
                     # For percentages, keep original formatting
                     formatted_value = f"{raw_value:.1f}%" if isinstance(raw_value, (int, float)) else str(raw_value)
+                    y_value = float(raw_value) if isinstance(raw_value, (int, float)) else 0
+                    logger.info(f"DEBUG** Item {i}: Percentage - formatted='{formatted_value}', y={y_value}")
                     chart_data.append({
                         "name": category,
-                        "y": float(raw_value) if isinstance(raw_value, (int, float)) else 0,
+                        "y": y_value,
                         "formatted": formatted_value
                     })
                 else:
@@ -52,19 +67,25 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
                     else:
                         formatted_value = genpact_format_number(raw_value)
                     
+                    y_value = float(raw_value) if isinstance(raw_value, (int, float)) else 0
+                    logger.info(f"DEBUG** Item {i}: Number - formatted='{formatted_value}', y={y_value}")
                     chart_data.append({
                         "name": category,
-                        "y": float(raw_value) if isinstance(raw_value, (int, float)) else 0,
+                        "y": y_value,
                         "formatted": formatted_value
                     })
                     
             except Exception as e:
+                logger.error(f"DEBUG** Error processing item {i}: {e}")
                 # Fallback for any conversion issues
                 chart_data.append({
                     "name": category,
                     "y": 0,
                     "formatted": "0"
                 })
+
+        logger.info(f"DEBUG** Final chart_data length: {len(chart_data)}")
+        logger.info(f"DEBUG** Sample chart_data (first 3): {chart_data[:3]}")
 
         # Use the proven chart configuration from working skills
         y_axis = [{
@@ -103,12 +124,19 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
             ]
         }]
 
-        return {
+        chart_result = {
             "chart_categories": categories,
             "chart_y_axis": y_axis,
             "chart_title": "",
             "chart_data": data
         }
+        
+        logger.info(f"DEBUG** Final chart result keys: {chart_result.keys()}")
+        logger.info(f"DEBUG** Chart categories count: {len(categories)}")
+        logger.info(f"DEBUG** Chart data series count: {len(data)}")
+        logger.info(f"DEBUG** Finished _create_breakout_chart_vars successfully")
+        
+        return chart_result
     
     def get_display_tables(self):
         df = self._df.copy()
