@@ -34,7 +34,19 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         previous_metric = metric.replace("(Current)", "(Previous)")
         has_previous = previous_metric in raw_b_df.columns
         
+        # If not found, try alternative patterns
+        if not has_previous:
+            # Try looking for any column with "Previous" in it that matches the base metric name
+            base_metric = metric.replace(" (Current)", "").replace("(Current)", "")
+            for col in raw_b_df.columns:
+                if "Previous" in col and base_metric.replace("(", "").replace(")", "") in col.replace("(", "").replace(")", ""):
+                    previous_metric = col
+                    has_previous = True
+                    break
+        
+        logger.info(f"DEBUG** Original metric: {metric}")
         logger.info(f"DEBUG** Previous metric: {previous_metric}, has_previous: {has_previous}")
+        logger.info(f"DEBUG** Available columns: {raw_b_df.columns.tolist()}")
         
         # Prepare Current data
         current_values = raw_b_df[metric].tolist()
@@ -232,11 +244,44 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         # Build series data - create separate series for Current and Previous
         data = []
         
-        # Current series
+        # Vibrant color palette for bars
+        current_colors = [
+            "#2E86C1",  # Professional blue
+            "#28B463",  # Vibrant green  
+            "#F39C12",  # Bright orange
+            "#E74C3C",  # Bold red
+            "#8E44AD",  # Rich purple
+            "#17A2B8",  # Teal
+            "#FFC107",  # Golden yellow
+            "#DC3545",  # Crimson
+            "#20C997",  # Emerald green
+            "#6F42C1",  # Deep indigo
+            "#FD7E14",  # Bright orange-red
+            "#198754"   # Forest green
+        ]
+        
+        # Complementary colors for Previous period (slightly muted but still vibrant)
+        previous_colors = [
+            "#5DADE2",  # Lighter blue
+            "#58D68D",  # Lighter green
+            "#F8C471",  # Lighter orange  
+            "#EC7063",  # Lighter red
+            "#AF7AC5",  # Lighter purple
+            "#5DADE2",  # Light teal
+            "#F7DC6F",  # Light yellow
+            "#F1948A",  # Light crimson
+            "#7DCEA0",  # Light emerald
+            "#BB8FCE",  # Light indigo
+            "#FDAB61",  # Light orange-red
+            "#82E0AA"   # Light forest green
+        ]
+        
+        # Current series with colorful bars
         current_series = {
             "name": "Current",
             "data": current_data,
-            "color": "#2E86C1",  # Professional blue
+            "colorByPoint": True,
+            "colors": current_colors,
             "dataLabels": {
                 "enabled": False
             },
@@ -246,12 +291,13 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         }
         data.append(current_series)
         
-        # Previous series (if available)
+        # Previous series (if available) with complementary colors
         if has_previous and previous_data:
             previous_series = {
                 "name": "Previous", 
                 "data": previous_data,
-                "color": "#95A5A6",  # Light gray for previous
+                "colorByPoint": True,
+                "colors": previous_colors,
                 "dataLabels": {
                     "enabled": False
                 },
@@ -260,6 +306,8 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
                 }
             }
             data.append(previous_series)
+            logger.info(f"DEBUG** Previous data being added: {len(previous_data)} items")
+            logger.info(f"DEBUG** Previous data sample: {previous_data[:3] if previous_data else 'None'}")
         
         logger.info(f"DEBUG** Created {len(data)} series: Current" + (", Previous" if has_previous else ""))
 
