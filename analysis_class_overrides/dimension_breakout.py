@@ -148,27 +148,36 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
             logger.info(f"DEBUG** Tick positions: {tick_positions}")
             logger.info(f"DEBUG** Tick labels: {tick_labels}")
             
-            # Use a JavaScript formatter function instead of categories
-            y_axis = [{
-                "title": "",
-                "tickPositions": tick_positions,
-                "labels": {
-                    "formatter": """function() {
-                        var value = this.value;
-                        if (value >= 1000000000) {
-                            return '$' + (value / 1000000000).toFixed(1) + 'B';
-                        } else if (value >= 1000000) {
-                            return '$' + (value / 1000000).toFixed(0) + 'M';
-                        } else if (value >= 100000) {
-                            return '$' + (value / 1000).toFixed(0) + 'K';
-                        } else if (value >= 1000) {
-                            return '$' + (value / 1000).toFixed(0) + 'K';
-                        } else {
-                            return '$' + value.toFixed(0);
-                        }
-                    }"""
-                }
-            }]
+            # Avoid JavaScript formatters - use simple axis configuration with manual scaling
+            # Scale the Y values to show in millions for readability
+            scaled_max = max_value / 1000000  # Convert to millions
+            
+            if scaled_max <= 500:
+                # For values up to 500M, use 100M intervals
+                y_axis = [{
+                    "title": "",
+                    "min": 0,
+                    "max": math.ceil(scaled_max / 100) * 100,
+                    "tickInterval": 100,
+                    "labels": {"format": "${value}M"}
+                }]
+            else:
+                # For values above 500M, use 200M intervals  
+                y_axis = [{
+                    "title": "",
+                    "min": 0,
+                    "max": math.ceil(scaled_max / 200) * 200, 
+                    "tickInterval": 200,
+                    "labels": {"format": "${value}M"}
+                }]
+            
+            # Scale down the chart data to match the axis
+            for item in chart_data:
+                if isinstance(item.get('y'), (int, float)):
+                    item['y'] = item['y'] / 1000000  # Convert to millions
+            
+            logger.info(f"DEBUG** Scaled chart data (first 3): {chart_data[:3]}")
+            logger.info(f"DEBUG** Y-axis config: {y_axis}")
         else:
             # For other values, use simple formatting
             if is_currency:
