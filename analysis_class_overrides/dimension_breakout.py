@@ -12,7 +12,8 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         self.ar_utils = ArUtils()
 
     def _create_breakout_chart_vars(self, raw_b_df: pd.DataFrame, dim: str, metric: str):
-
+        from genpact_formatting import genpact_format_number
+        
         categories = raw_b_df[dim].tolist()
         
         # Get the metric format to determine if it's a percentage
@@ -20,94 +21,86 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         is_percentage = "%" in metric_format
         is_currency = "$" in metric_format
         
-        # Create custom formatter for better number display
-        if is_percentage:
-            # Keep percentage format as is
-            formatter = self.ar_utils.python_to_highcharts_format(metric_format)
-        else:
-            # Use abbreviated number format for large numbers
-            formatter = {
-                'value_format': '{value:,.0f}',  # Will be overridden by formatter function
-                'point_y_format': '{point.y:,.0f}'  # Will be overridden by formatter function
+        # Prepare data with proper formatting like the working skills
+        raw_values = raw_b_df[metric].tolist()
+        chart_data = []
+        
+        for i, (category, raw_value) in enumerate(zip(categories, raw_values)):
+            try:
+                # Handle NaN values
+                if pd.isna(raw_value):
+                    chart_data.append({
+                        "name": category,
+                        "y": 0,
+                        "formatted": "N/A"
+                    })
+                    continue
+                
+                # Format the value using genpact_format_number like working skills
+                if is_percentage:
+                    # For percentages, keep original formatting
+                    formatted_value = f"{raw_value:.1f}%" if isinstance(raw_value, (int, float)) else str(raw_value)
+                    chart_data.append({
+                        "name": category,
+                        "y": float(raw_value) if isinstance(raw_value, (int, float)) else 0,
+                        "formatted": formatted_value
+                    })
+                else:
+                    # For currency and regular numbers, use genpact formatting
+                    if is_currency:
+                        formatted_value = f"${genpact_format_number(raw_value)}"
+                    else:
+                        formatted_value = genpact_format_number(raw_value)
+                    
+                    chart_data.append({
+                        "name": category,
+                        "y": float(raw_value) if isinstance(raw_value, (int, float)) else 0,
+                        "formatted": formatted_value
+                    })
+                    
+            except Exception as e:
+                # Fallback for any conversion issues
+                chart_data.append({
+                    "name": category,
+                    "y": 0,
+                    "formatted": "0"
+                })
+
+        # Use the proven chart configuration from working skills
+        y_axis = [{
+            "title": "",
+            "labels": {
+                "formatter": "function() { return this.axis.defaultLabelFormatter.call(this); }"
             }
-
-        # Custom formatter function for y-axis labels
-        if not is_percentage:
-            y_axis = [{
-                "title": "",
-                "labels": {
-                    "formatter": """function() {
-                        var value = Math.abs(this.value);
-                        var sign = this.value < 0 ? '-' : '';
-                        var currency = '""" + ("$" if is_currency else "") + """';
-                        
-                        if (value >= 1000000000) {
-                            return sign + currency + (value / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
-                        } else if (value >= 1000000) {
-                            return sign + currency + (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-                        } else if (value >= 1000) {
-                            return sign + currency + (value / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-                        } else {
-                            return sign + currency + value.toFixed(0);
-                        }
-                    }"""
-                }
-            }]
-            
-            # Custom tooltip formatter
-            tooltip_formatter = """function() {
-                var value = Math.abs(this.y);
-                var sign = this.y < 0 ? '-' : '';
-                var currency = '""" + ("$" if is_currency else "") + """';
-                
-                var formattedValue;
-                if (value >= 1000000000) {
-                    formattedValue = sign + currency + (value / 1000000000).toFixed(2).replace(/\.00$/, '') + 'B';
-                } else if (value >= 1000000) {
-                    formattedValue = sign + currency + (value / 1000000).toFixed(2).replace(/\.00$/, '') + 'M';
-                } else if (value >= 1000) {
-                    formattedValue = sign + currency + (value / 1000).toFixed(2).replace(/\.00$/, '') + 'K';
-                } else {
-                    formattedValue = sign + currency + value.toFixed(0);
-                }
-                
-                return '<b>' + this.series.name + '</b>: ' + formattedValue;
-            }"""
-        else:
-            y_axis = [{
-                "title": "",
-                "labels": {
-                    "format": formatter.get('value_format')
-                }
-            }]
-            tooltip_formatter = None
-
+        }]
+        
+        # Build series data with better color palette
         data = [{
             "name": metric,
-            "data": self.helper.replace_nans_with_string_nan(raw_b_df[metric].tolist()),
+            "data": chart_data,
             "dataLabels": {
                 "enabled": False,
-                "formatter": """function() {
-                    var value = Math.abs(this.y);
-                    var sign = this.y < 0 ? '-' : '';
-                    var currency = '""" + ("$" if is_currency else "") + """';
-                    
-                    if (value >= 1000000000) {
-                        return sign + currency + (value / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
-                    } else if (value >= 1000000) {
-                        return sign + currency + (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-                    } else if (value >= 1000) {
-                        return sign + currency + (value / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-                    } else {
-                        return sign + currency + value.toFixed(0);
-                    }
-                }""" if not is_percentage else None
+                "formatter": "function() { return this.point.formatted || this.y; }"
             },
             "tooltip": {
-                "pointFormatter": tooltip_formatter
-            } if tooltip_formatter else {
-                "pointFormat": "<b>{series.name}</b>: " + formatter.get('point_y_format')
-            }
+                "pointFormatter": "function() { return '<b>' + this.series.name + '</b>: ' + (this.formatted || this.y); }"
+            },
+            # Use a vibrant color palette instead of dark blue/black
+            "colorByPoint": True,
+            "colors": [
+                "#2E86C1",  # Professional blue (like working skills)
+                "#28B463",  # Green
+                "#F39C12",  # Orange
+                "#E74C3C",  # Red  
+                "#8E44AD",  # Purple (like working skills)
+                "#17A2B8",  # Teal
+                "#FFC107",  # Amber
+                "#DC3545",  # Crimson
+                "#20C997",  # Success green
+                "#6F42C1",  # Indigo
+                "#FD7E14",  # Bright orange
+                "#198754"   # Forest green
+            ]
         }]
 
         return {
