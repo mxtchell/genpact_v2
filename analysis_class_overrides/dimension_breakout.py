@@ -87,13 +87,62 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         logger.info(f"DEBUG** Final chart_data length: {len(chart_data)}")
         logger.info(f"DEBUG** Sample chart_data (first 3): {chart_data[:3]}")
 
-        # Use simple Y-axis format to avoid JS crashes
-        y_axis = [{
-            "title": "",
-            "labels": {
-                "format": "${value:,.0f}" if is_currency else "{value:,.0f}"
-            }
-        }]
+        # Create Y-axis with M/K/B formatting by calculating ticks and labels
+        max_value = max([item.get('y', 0) for item in chart_data if isinstance(item.get('y'), (int, float))]) if chart_data else 0
+        min_value = min([item.get('y', 0) for item in chart_data if isinstance(item.get('y'), (int, float))]) if chart_data else 0
+        
+        logger.info(f"DEBUG** Y-axis range: {min_value} to {max_value}")
+        
+        if is_percentage:
+            y_axis = [{"title": "", "labels": {"format": "{value:.1f}%"}}]
+        elif is_currency and max_value >= 1000:
+            # For currency values with large numbers, create custom tick positions and labels
+            import math
+            
+            # Calculate appropriate tick interval and positions
+            value_range = max_value - min_value
+            if max_value >= 1000000000:
+                tick_interval = math.ceil(value_range / 5 / 1000000000) * 1000000000
+            elif max_value >= 1000000:
+                tick_interval = math.ceil(value_range / 5 / 1000000) * 1000000
+            elif max_value >= 1000:
+                tick_interval = math.ceil(value_range / 5 / 1000) * 1000
+            else:
+                tick_interval = math.ceil(value_range / 5)
+            
+            # Create tick positions from 0 to max_value
+            tick_positions = []
+            tick_labels = []
+            current_tick = 0
+            while current_tick <= max_value:
+                tick_positions.append(current_tick)
+                if current_tick >= 1000000000:
+                    tick_labels.append(f"${current_tick / 1000000000:.1f}B")
+                elif current_tick >= 1000000:
+                    tick_labels.append(f"${current_tick / 1000000:.1f}M")
+                elif current_tick >= 100000:
+                    tick_labels.append(f"${current_tick / 1000:.1f}K")
+                elif current_tick >= 1000:
+                    tick_labels.append(f"${current_tick / 1000:.0f}K")
+                else:
+                    tick_labels.append(f"${current_tick:.0f}")
+                current_tick += tick_interval
+            
+            logger.info(f"DEBUG** Tick positions: {tick_positions}")
+            logger.info(f"DEBUG** Tick labels: {tick_labels}")
+            
+            y_axis = [{
+                "title": "",
+                "tickPositions": tick_positions,
+                "categories": tick_labels,
+                "labels": {"enabled": True}
+            }]
+        else:
+            # For other values, use simple formatting
+            if is_currency:
+                y_axis = [{"title": "", "labels": {"format": "${value:.0f}"}}]
+            else:
+                y_axis = [{"title": "", "labels": {"format": "{value:.0f}"}}]
         
         # Build series data with better color palette - remove JS formatters
         data = [{
