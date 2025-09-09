@@ -122,11 +122,21 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
                                 previous_formatted = str(previous_value)
                                 previous_y = 0
                         else:
-                            if is_currency:
-                                previous_formatted = f"${genpact_format_number(previous_value)}"
-                            else:
-                                previous_formatted = genpact_format_number(previous_value)
-                            previous_y = float(previous_value) if isinstance(previous_value, (int, float)) else 0
+                            # Handle string numbers for currency data
+                            try:
+                                if isinstance(previous_value, str):
+                                    previous_numeric = float(previous_value)
+                                else:
+                                    previous_numeric = previous_value
+                                
+                                if is_currency:
+                                    previous_formatted = f"${genpact_format_number(previous_numeric)}"
+                                else:
+                                    previous_formatted = genpact_format_number(previous_numeric)
+                                previous_y = previous_numeric
+                            except (ValueError, TypeError):
+                                previous_formatted = str(previous_value)
+                                previous_y = 0
                     
                     previous_data.append({
                         "name": category,
