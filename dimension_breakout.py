@@ -20,7 +20,7 @@ from skill_framework.skills import ExportData
 logger = logging.getLogger(__name__)
 
 @skill(
-    name=dimension_breakout_config.name,
+    name="v2 Dimension Breakout",
     llm_name=dimension_breakout_config.llm_name,
     description=dimension_breakout_config.description,
     capabilities=dimension_breakout_config.capabilities,
