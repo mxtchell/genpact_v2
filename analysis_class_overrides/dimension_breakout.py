@@ -70,8 +70,13 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
                     current_y = 0
                 else:
                     if is_percentage:
-                        current_formatted = f"{current_value:.1f}%" if isinstance(current_value, (int, float)) else str(current_value)
-                        current_y = float(current_value) if isinstance(current_value, (int, float)) else 0
+                        # Handle percentage strings like "63.12%" 
+                        if isinstance(current_value, str) and "%" in current_value:
+                            current_formatted = current_value  # Keep original formatting
+                            current_y = float(current_value.replace("%", ""))  # Convert to numeric
+                        else:
+                            current_formatted = f"{current_value:.1f}%" if isinstance(current_value, (int, float)) else str(current_value)
+                            current_y = float(current_value) if isinstance(current_value, (int, float)) else 0
                     else:
                         if is_currency:
                             current_formatted = f"${genpact_format_number(current_value)}"
@@ -93,8 +98,13 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
                         previous_y = 0
                     else:
                         if is_percentage:
-                            previous_formatted = f"{previous_value:.1f}%" if isinstance(previous_value, (int, float)) else str(previous_value)
-                            previous_y = float(previous_value) if isinstance(previous_value, (int, float)) else 0
+                            # Handle percentage strings like "62.67%"
+                            if isinstance(previous_value, str) and "%" in previous_value:
+                                previous_formatted = previous_value  # Keep original formatting
+                                previous_y = float(previous_value.replace("%", ""))  # Convert to numeric
+                            else:
+                                previous_formatted = f"{previous_value:.1f}%" if isinstance(previous_value, (int, float)) else str(previous_value)
+                                previous_y = float(previous_value) if isinstance(previous_value, (int, float)) else 0
                         else:
                             if is_currency:
                                 previous_formatted = f"${genpact_format_number(previous_value)}"
