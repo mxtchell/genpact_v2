@@ -99,35 +99,52 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
             # For currency values with large numbers, create custom tick positions and labels
             import math
             
-            # Calculate appropriate tick interval and positions
+            # Calculate better tick interval for 5-6 ticks total
             value_range = max_value - min_value
-            if max_value >= 1000000000:
-                tick_interval = math.ceil(value_range / 5 / 1000000000) * 1000000000
-            elif max_value >= 1000000:
-                tick_interval = math.ceil(value_range / 5 / 1000000) * 1000000
-            elif max_value >= 1000:
-                tick_interval = math.ceil(value_range / 5 / 1000) * 1000
-            else:
-                tick_interval = math.ceil(value_range / 5)
+            target_ticks = 5
+            raw_interval = value_range / target_ticks
             
-            # Create tick positions from 0 to max_value
+            # Round interval to nice numbers
+            if max_value >= 1000000000:
+                # For billions, use 200M intervals
+                tick_interval = 200000000  # 200M
+            elif max_value >= 500000000:  
+                # For 500M+, use 100M intervals
+                tick_interval = 100000000  # 100M
+            elif max_value >= 100000000:
+                # For 100M+, use 50M intervals  
+                tick_interval = 50000000   # 50M
+            elif max_value >= 10000000:
+                # For 10M+, use 10M intervals
+                tick_interval = 10000000   # 10M
+            elif max_value >= 1000000:
+                # For 1M+, use 1M intervals
+                tick_interval = 1000000    # 1M
+            else:
+                # For smaller values, use reasonable intervals
+                tick_interval = max(1000, math.ceil(raw_interval / 1000) * 1000)
+            
+            # Create tick positions from 0 to a bit above max_value
             tick_positions = []
             tick_labels = []
             current_tick = 0
-            while current_tick <= max_value:
+            max_tick = math.ceil(max_value / tick_interval) * tick_interval
+            
+            while current_tick <= max_tick:
                 tick_positions.append(current_tick)
                 if current_tick >= 1000000000:
                     tick_labels.append(f"${current_tick / 1000000000:.1f}B")
                 elif current_tick >= 1000000:
-                    tick_labels.append(f"${current_tick / 1000000:.1f}M")
+                    tick_labels.append(f"${current_tick / 1000000:.0f}M")
                 elif current_tick >= 100000:
-                    tick_labels.append(f"${current_tick / 1000:.1f}K")
+                    tick_labels.append(f"${current_tick / 1000:.0f}K")
                 elif current_tick >= 1000:
                     tick_labels.append(f"${current_tick / 1000:.0f}K")
                 else:
                     tick_labels.append(f"${current_tick:.0f}")
                 current_tick += tick_interval
             
+            logger.info(f"DEBUG** Tick interval: {tick_interval}")
             logger.info(f"DEBUG** Tick positions: {tick_positions}")
             logger.info(f"DEBUG** Tick labels: {tick_labels}")
             
