@@ -87,24 +87,23 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         logger.info(f"DEBUG** Final chart_data length: {len(chart_data)}")
         logger.info(f"DEBUG** Sample chart_data (first 3): {chart_data[:3]}")
 
-        # Use the proven chart configuration from working skills
+        # Use simple chart configuration without complex JS formatters
         y_axis = [{
             "title": "",
             "labels": {
-                "formatter": "function() { return this.axis.defaultLabelFormatter.call(this); }"
+                "format": "${value:,.0f}"
             }
         }]
         
-        # Build series data with better color palette
+        # Build series data with better color palette - remove JS formatters
         data = [{
             "name": metric,
             "data": chart_data,
             "dataLabels": {
-                "enabled": False,
-                "formatter": "function() { return this.point.formatted || this.y; }"
+                "enabled": False
             },
             "tooltip": {
-                "pointFormatter": "function() { return '<b>' + this.series.name + '</b>: ' + (this.formatted || this.y); }"
+                "pointFormat": "<b>{series.name}</b>: {point.formatted}"
             },
             # Use a vibrant color palette instead of dark blue/black
             "colorByPoint": True,
