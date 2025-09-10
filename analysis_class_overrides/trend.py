@@ -129,23 +129,49 @@ class InsuranceAdvanceTrend(AdvanceTrend):
                             self.logger.info(f"DEBUG** Applying currency M/K/B formatting for {prefix}")
                             # Apply M/K/B formatting for large currency values
                             scaled_max = max_value / 1000000  # Convert to millions
+                            scaled_min = min_value / 1000000  # Convert to millions
                             
-                            if scaled_max <= 500:
-                                y_axis_config = {
-                                    "title": {"text": ""},
-                                    "min": 0,
-                                    "max": math.ceil(scaled_max / 100) * 100,
-                                    "tickInterval": 100,
-                                    "labels": {"format": "${value}M"}
-                                }
+                            # For difference charts, allow negative values
+                            if prefix == "difference_":
+                                # Calculate symmetric range around zero for difference charts
+                                abs_max = max(abs(scaled_max), abs(scaled_min))
+                                if abs_max <= 500:
+                                    axis_max = math.ceil(abs_max / 100) * 100
+                                    y_axis_config = {
+                                        "title": {"text": ""},
+                                        "min": -axis_max,
+                                        "max": axis_max,
+                                        "tickInterval": 100,
+                                        "labels": {"format": "${value}M"}
+                                    }
+                                else:
+                                    axis_max = math.ceil(abs_max / 200) * 200
+                                    y_axis_config = {
+                                        "title": {"text": ""},
+                                        "min": -axis_max,
+                                        "max": axis_max,
+                                        "tickInterval": 200,
+                                        "labels": {"format": "${value}M"}
+                                    }
+                                self.logger.info(f"DEBUG** Applied symmetric Y-axis for difference chart: -{axis_max}M to {axis_max}M")
                             else:
-                                y_axis_config = {
-                                    "title": {"text": ""},
-                                    "min": 0,
-                                    "max": math.ceil(scaled_max / 200) * 200,
-                                    "tickInterval": 200,
-                                    "labels": {"format": "${value}M"}
-                                }
+                                # For absolute and growth charts, start from 0
+                                if scaled_max <= 500:
+                                    y_axis_config = {
+                                        "title": {"text": ""},
+                                        "min": 0,
+                                        "max": math.ceil(scaled_max / 100) * 100,
+                                        "tickInterval": 100,
+                                        "labels": {"format": "${value}M"}
+                                    }
+                                else:
+                                    y_axis_config = {
+                                        "title": {"text": ""},
+                                        "min": 0,
+                                        "max": math.ceil(scaled_max / 200) * 200,
+                                        "tickInterval": 200,
+                                        "labels": {"format": "${value}M"}
+                                    }
                             
                             # Scale the data to millions
                             series_data = chart_config[series_key]
