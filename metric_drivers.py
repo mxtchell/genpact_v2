@@ -19,7 +19,7 @@ import json
 logger = logging.getLogger(__name__)
 
 @skill(
-    name=metric_driver_analysis_config.name,
+    name="v2 Metric Drivers",
     llm_name=metric_driver_analysis_config.llm_name,
     description=metric_driver_analysis_config.description,
     capabilities=metric_driver_analysis_config.capabilities,
