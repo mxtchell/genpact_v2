@@ -21,7 +21,7 @@ RUNNING_LOCALLY = False
 logger = logging.getLogger(__name__)
 
 @skill(
-    name=trend_analysis_config.name,
+    name="v2 Trend",
     llm_name=trend_analysis_config.llm_name,
     description=trend_analysis_config.description,
     capabilities=trend_analysis_config.capabilities,
@@ -191,7 +191,7 @@ def render_layout(charts, tables, title, subtitle, insights_dfs, warnings, max_p
     ar_utils = ArUtils()
     insights = ar_utils.get_llm_response(insight_template)
 
-    tab_vars = {"headline": title if title else "Total",
+    tab_vars = {"headline": title.title() if title else "Total",
                 "sub_headline": subtitle or "Trend Analysis",
                 "hide_growth_warning": False if warnings else True,
                 "exec_summary": insights if insights else "No Insight.",
