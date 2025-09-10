@@ -209,9 +209,10 @@ class InsuranceDriverAnalysis(DriverAnalysis):
 
         data = []
 
-        # Current series with vibrant colors
+        # Current series with vibrant colors - add metric name
+        metric_name = self.ba.target_metric.get("label", self.ba.target_metric.get("name", "Metric"))
         data.append({
-            "name": rename_dict["curr"],
+            "name": f"{metric_name} (Current)",
             "data": curr_data,
             "colorByPoint": True,
             "colors": current_colors,
@@ -223,9 +224,9 @@ class InsuranceDriverAnalysis(DriverAnalysis):
             }
         })
 
-        # Previous series with complementary colors
+        # Previous series with complementary colors - add metric name
         data.append({
-            "name": rename_dict["prev"],
+            "name": f"{metric_name} (Previous)",
             "data": prev_data,
             "colorByPoint": True,
             "colors": previous_colors,

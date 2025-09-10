@@ -147,7 +147,7 @@ def render_layout(tables, title, subtitle, insights_dfs, warnings, max_prompt, i
     viz_list = []
     export_data = {}
 
-    general_vars = {"headline": title if title else "Total",
+    general_vars = {"headline": title.title() if title else "Total",
                     "sub_headline": subtitle if subtitle else "Driver Analysis",
                     "hide_growth_warning": False if warnings else True,
                     "exec_summary": insights if insights else "No Insights.",
