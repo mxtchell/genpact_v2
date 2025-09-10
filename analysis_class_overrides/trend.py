@@ -17,52 +17,16 @@ class InsuranceAdvanceTrend(AdvanceTrend):
         # Get the original chart vars from parent
         chart_vars = super().get_dynamic_layout_chart_vars()
         
-        self.logger.info(f"DEBUG** Starting trend chart formatting enhancement")
-        self.logger.info(f"DEBUG** Available chart keys: {list(chart_vars.keys())}")
+        self.logger.info(f"DEBUG** Starting trend chart formatting enhancement for {list(chart_vars.keys())}")
         
         # Process each chart configuration
         for chart_name, chart_config in chart_vars.items():
             self.logger.info(f"DEBUG** Processing chart: {chart_name}")
-            self.logger.info(f"DEBUG** Chart config keys: {list(chart_config.keys())}")
             
-            # Check what chart data structure looks like
-            if "chart_data" in chart_config:
-                self.logger.info(f"DEBUG** Chart data structure: {type(chart_config['chart_data'])}")
-                if isinstance(chart_config['chart_data'], list) and len(chart_config['chart_data']) > 0:
-                    self.logger.info(f"DEBUG** First series keys: {list(chart_config['chart_data'][0].keys()) if isinstance(chart_config['chart_data'][0], dict) else 'Not dict'}")
-            
-            # Check for different axis naming patterns
-            axis_keys = [k for k in chart_config.keys() if 'axis' in k.lower() or 'y' in k.lower()]
-            self.logger.info(f"DEBUG** Potential axis keys in chart {chart_name}: {axis_keys}")
-            
-            # Look for series data patterns
-            series_keys = [k for k in chart_config.keys() if 'series' in k.lower() or 'data' in k.lower()]
-            self.logger.info(f"DEBUG** Potential series keys in chart {chart_name}: {series_keys}")
-            
-            # Check the metrics info and explore available attributes
-            self.logger.info(f"DEBUG** Available metrics: {getattr(self, 'metrics', 'No metrics attr')}")
-            self.logger.info(f"DEBUG** Format dict: {getattr(self, 'format_dict', 'No format_dict attr')}")
-            self.logger.info(f"DEBUG** All attributes: {[attr for attr in dir(self) if not attr.startswith('_')]}")
-            
-            # Try different possible metric attributes
-            possible_metrics = getattr(self, 'metric_cols', getattr(self, 'metric_list', getattr(self, 'target_metrics', [])))
-            self.logger.info(f"DEBUG** Possible metrics: {possible_metrics}")
-            
-            # Try to get format information from different sources
-            format_info = getattr(self, 'format_dict', getattr(self, 'metric_formats', {}))
-            if hasattr(self, 'env'):
-                env_metrics = getattr(self.env, 'metrics', None)
-                self.logger.info(f"DEBUG** Env metrics: {env_metrics}")
-            
-            # Check if we have metric display info or parameter info
-            if hasattr(self, 'paramater_display_infomation'):
-                self.logger.info(f"DEBUG** Parameter display info: {self.paramater_display_infomation}")
+            # Quick check for available env metrics
+            env_metrics = getattr(self.env, 'metrics', None) if hasattr(self, 'env') else None
+            self.logger.info(f"DEBUG** Available metrics from env: {env_metrics}")
                 
-            # Try to find metric format from chart config itself
-            metric_name_key = f"{prefix}metric_name" if prefix else "metric_name"
-            if metric_name_key in chart_config:
-                chart_metric = chart_config[metric_name_key]
-                self.logger.info(f"DEBUG** Chart metric name: {chart_metric}")
             # Handle trend-specific chart structure with prefixes
             prefixes = ["absolute_", "growth_", "difference_"]
             processed_any = False
