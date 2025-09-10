@@ -39,9 +39,30 @@ class InsuranceAdvanceTrend(AdvanceTrend):
             series_keys = [k for k in chart_config.keys() if 'series' in k.lower() or 'data' in k.lower()]
             self.logger.info(f"DEBUG** Potential series keys in chart {chart_name}: {series_keys}")
             
-            # Check the metrics info
+            # Check the metrics info and explore available attributes
             self.logger.info(f"DEBUG** Available metrics: {getattr(self, 'metrics', 'No metrics attr')}")
             self.logger.info(f"DEBUG** Format dict: {getattr(self, 'format_dict', 'No format_dict attr')}")
+            self.logger.info(f"DEBUG** All attributes: {[attr for attr in dir(self) if not attr.startswith('_')]}")
+            
+            # Try different possible metric attributes
+            possible_metrics = getattr(self, 'metric_cols', getattr(self, 'metric_list', getattr(self, 'target_metrics', [])))
+            self.logger.info(f"DEBUG** Possible metrics: {possible_metrics}")
+            
+            # Try to get format information from different sources
+            format_info = getattr(self, 'format_dict', getattr(self, 'metric_formats', {}))
+            if hasattr(self, 'env'):
+                env_metrics = getattr(self.env, 'metrics', None)
+                self.logger.info(f"DEBUG** Env metrics: {env_metrics}")
+            
+            # Check if we have metric display info or parameter info
+            if hasattr(self, 'paramater_display_infomation'):
+                self.logger.info(f"DEBUG** Parameter display info: {self.paramater_display_infomation}")
+                
+            # Try to find metric format from chart config itself
+            metric_name_key = f"{prefix}metric_name" if prefix else "metric_name"
+            if metric_name_key in chart_config:
+                chart_metric = chart_config[metric_name_key]
+                self.logger.info(f"DEBUG** Chart metric name: {chart_metric}")
             # Handle trend-specific chart structure with prefixes
             prefixes = ["absolute_", "growth_", "difference_"]
             processed_any = False
@@ -53,17 +74,43 @@ class InsuranceAdvanceTrend(AdvanceTrend):
                 if series_key in chart_config:
                     self.logger.info(f"DEBUG** Found {series_key} in chart {chart_name}")
                     
-                    # Determine if this is currency or percentage
+                    # Determine if this is currency or percentage by checking chart name or metric
                     is_currency = False
                     is_percentage = False
                     
-                    # Check the metric format
-                    for metric in self.metrics:
-                        metric_format = self.format_dict.get(metric, "")
-                        if "$" in metric_format:
+                    # Try multiple ways to determine metric format
+                    # Method 1: Check chart name for currency indicators
+                    chart_name_lower = chart_name.lower()
+                    if any(word in chart_name_lower for word in ['premium', 'revenue', 'sales', 'cost', 'expense', 'loss']):
+                        is_currency = True
+                        self.logger.info(f"DEBUG** Detected currency from chart name: {chart_name}")
+                    elif any(word in chart_name_lower for word in ['rate', 'ratio', 'percent', '%']):
+                        is_percentage = True  
+                        self.logger.info(f"DEBUG** Detected percentage from chart name: {chart_name}")
+                        
+                    # Method 2: Check metric name if available
+                    metric_name_key = f"{prefix}metric_name"
+                    if metric_name_key in chart_config:
+                        metric_name = str(chart_config[metric_name_key]).lower()
+                        if any(word in metric_name for word in ['premium', 'revenue', 'sales', 'cost', 'expense', 'loss']):
                             is_currency = True
-                        if "%" in metric_format:
+                            self.logger.info(f"DEBUG** Detected currency from metric name: {chart_config[metric_name_key]}")
+                        elif any(word in metric_name for word in ['rate', 'ratio', 'percent', '%']):
                             is_percentage = True
+                            self.logger.info(f"DEBUG** Detected percentage from metric name: {chart_config[metric_name_key]}")
+                    
+                    # Method 3: Try to get format from available attributes
+                    try:
+                        if hasattr(self, 'metric_cols'):
+                            for metric in self.metric_cols:
+                                if hasattr(self, 'format_dict') and metric in self.format_dict:
+                                    metric_format = self.format_dict.get(metric, "")
+                                    if "$" in metric_format:
+                                        is_currency = True
+                                    if "%" in metric_format:
+                                        is_percentage = True
+                    except Exception as e:
+                        self.logger.info(f"DEBUG** Error checking metric formats: {e}")
                     
                     self.logger.info(f"DEBUG** Chart {chart_name} ({prefix}): is_currency={is_currency}, is_percentage={is_percentage}")
                     
