@@ -20,32 +20,224 @@ class InsuranceDriverAnalysis(DriverAnalysis):
         self.ar_utils = ArUtils()
 
     def _create_breakout_chart_vars(self, raw_b_df: pd.DataFrame, dim: str, rename_dict: Dict[str, str]):
-
+        from genpact_formatting import genpact_format_number
+        import logging
+        import math
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"DEBUG** Starting metric drivers chart creation")
+        logger.info(f"DEBUG** DataFrame shape: {raw_b_df.shape}")
+        logger.info(f"DEBUG** DataFrame columns: {raw_b_df.columns.tolist()}")
+        
         categories = raw_b_df[dim].tolist()
+        logger.info(f"DEBUG** Categories: {categories}")
 
+        # Get metric format to determine formatting approach
         formatter = self.ar_utils.python_to_highcharts_format(self.ba.target_metric["fmt"])
+        metric_format = self.ba.target_metric.get("fmt", "")
+        is_percentage = "%" in metric_format
+        is_currency = "$" in metric_format
+        
+        logger.info(f"DEBUG** Metric format: {metric_format}, is_percentage: {is_percentage}, is_currency: {is_currency}")
 
-        y_axis = [{
-            "title": "",
-            "labels": {
-                "format": formatter.get('value_format')
-            }
-        }]
+        # Process data for both curr and prev with proper formatting
+        curr_values = raw_b_df["curr"].tolist()
+        prev_values = raw_b_df["prev"].tolist()
+        
+        logger.info(f"DEBUG** Curr values: {curr_values}")
+        logger.info(f"DEBUG** Prev values: {prev_values}")
+        
+        # Prepare formatted data like dimension breakout
+        curr_data = []
+        prev_data = []
+        
+        for i, (category, curr_val, prev_val) in enumerate(zip(categories, curr_values, prev_values)):
+            # Process current values
+            if pd.isna(curr_val):
+                curr_formatted = "N/A"
+                curr_y = 0
+            else:
+                if is_percentage:
+                    if isinstance(curr_val, str) and "%" in curr_val:
+                        curr_formatted = curr_val
+                        curr_y = float(curr_val.replace("%", ""))
+                    elif isinstance(curr_val, (int, float)):
+                        percentage_value = curr_val * 100
+                        curr_formatted = f"{percentage_value:.2f}%"
+                        curr_y = percentage_value
+                    else:
+                        curr_formatted = str(curr_val)
+                        curr_y = 0
+                else:
+                    try:
+                        if isinstance(curr_val, str):
+                            curr_numeric = float(curr_val)
+                        else:
+                            curr_numeric = curr_val
+                        
+                        if is_currency:
+                            curr_formatted = f"${genpact_format_number(curr_numeric)}"
+                        else:
+                            curr_formatted = genpact_format_number(curr_numeric)
+                        curr_y = curr_numeric
+                    except (ValueError, TypeError):
+                        curr_formatted = str(curr_val)
+                        curr_y = 0
+            
+            curr_data.append({
+                "name": category,
+                "y": curr_y,
+                "formatted": curr_formatted
+            })
+            
+            # Process previous values
+            if pd.isna(prev_val):
+                prev_formatted = "N/A"
+                prev_y = 0
+            else:
+                if is_percentage:
+                    if isinstance(prev_val, str) and "%" in prev_val:
+                        prev_formatted = prev_val
+                        prev_y = float(prev_val.replace("%", ""))
+                    elif isinstance(prev_val, (int, float)):
+                        percentage_value = prev_val * 100
+                        prev_formatted = f"{percentage_value:.2f}%"
+                        prev_y = percentage_value
+                    else:
+                        prev_formatted = str(prev_val)
+                        prev_y = 0
+                else:
+                    try:
+                        if isinstance(prev_val, str):
+                            prev_numeric = float(prev_val)
+                        else:
+                            prev_numeric = prev_val
+                        
+                        if is_currency:
+                            prev_formatted = f"${genpact_format_number(prev_numeric)}"
+                        else:
+                            prev_formatted = genpact_format_number(prev_numeric)
+                        prev_y = prev_numeric
+                    except (ValueError, TypeError):
+                        prev_formatted = str(prev_val)
+                        prev_y = 0
+            
+            prev_data.append({
+                "name": category,
+                "y": prev_y,
+                "formatted": prev_formatted
+            })
+
+        # Create Y-axis with M/K/B formatting like dimension breakout
+        all_values = [item.get('y', 0) for item in curr_data + prev_data if isinstance(item.get('y'), (int, float))]
+        max_value = max(all_values) if all_values else 0
+        min_value = min(all_values) if all_values else 0
+        
+        logger.info(f"DEBUG** Y-axis range: {min_value} to {max_value}")
+        
+        if is_percentage:
+            y_axis = [{"title": "", "labels": {"format": "{value:.1f}%"}}]
+        elif is_currency and max_value >= 1000:
+            # Scale data for better display like dimension breakout
+            import math
+            scaled_max = max_value / 1000000  # Convert to millions
+            
+            if scaled_max <= 500:
+                y_axis = [{
+                    "title": "",
+                    "min": 0,
+                    "max": math.ceil(scaled_max / 100) * 100,
+                    "tickInterval": 100,
+                    "labels": {"format": "${value}M"}
+                }]
+            else:
+                y_axis = [{
+                    "title": "",
+                    "min": 0,
+                    "max": math.ceil(scaled_max / 200) * 200, 
+                    "tickInterval": 200,
+                    "labels": {"format": "${value}M"}
+                }]
+            
+            # Scale the data to match the axis
+            for item in curr_data:
+                if isinstance(item.get('y'), (int, float)):
+                    item['y'] = item['y'] / 1000000
+            
+            for item in prev_data:
+                if isinstance(item.get('y'), (int, float)):
+                    item['y'] = item['y'] / 1000000
+            
+            logger.info(f"DEBUG** Scaled curr data (first 3): {curr_data[:3]}")
+            logger.info(f"DEBUG** Scaled prev data (first 3): {prev_data[:3]}")
+        else:
+            y_axis = [{
+                "title": "",
+                "labels": {"format": formatter.get('value_format')}
+            }]
+
+        # Vibrant color palette like dimension breakout
+        current_colors = [
+            "#2E86C1",  # Professional blue
+            "#28B463",  # Vibrant green  
+            "#F39C12",  # Bright orange
+            "#E74C3C",  # Bold red
+            "#8E44AD",  # Rich purple
+            "#17A2B8",  # Teal
+            "#FFC107",  # Golden yellow
+            "#DC3545",  # Crimson
+            "#20C997",  # Emerald green
+            "#6F42C1",  # Deep indigo
+            "#FD7E14",  # Bright orange-red
+            "#198754"   # Forest green
+        ]
+        
+        previous_colors = [
+            "#5DADE2",  # Lighter blue
+            "#58D68D",  # Lighter green
+            "#F8C471",  # Lighter orange  
+            "#EC7063",  # Lighter red
+            "#AF7AC5",  # Lighter purple
+            "#5DADE2",  # Light teal
+            "#F7DC6F",  # Light yellow
+            "#F1948A",  # Light crimson
+            "#7DCEA0",  # Light emerald
+            "#BB8FCE",  # Light indigo
+            "#FDAB61",  # Light orange-red
+            "#82E0AA"   # Light forest green
+        ]
 
         data = []
 
-        for col in ["curr", "prev"]:
-            data.append({
-                "name": rename_dict[col],
-                "data": self.helper.replace_nans_with_string_nan(raw_b_df[col].tolist()),
-                "dataLabels": {
-                    "enabled": False,
-                    "format": formatter.get('point_y_format')
-                },
-                "tooltip": {
-                    "pointFormat": "<b>{series.name}</b>: " + formatter.get('point_y_format')
-                }
-            })
+        # Current series with vibrant colors
+        data.append({
+            "name": rename_dict["curr"],
+            "data": curr_data,
+            "colorByPoint": True,
+            "colors": current_colors,
+            "dataLabels": {
+                "enabled": False
+            },
+            "tooltip": {
+                "pointFormat": "<b>{series.name}</b>: {point.formatted}"
+            }
+        })
+
+        # Previous series with complementary colors
+        data.append({
+            "name": rename_dict["prev"],
+            "data": prev_data,
+            "colorByPoint": True,
+            "colors": previous_colors,
+            "dataLabels": {
+                "enabled": False
+            },
+            "tooltip": {
+                "pointFormat": "<b>{series.name}</b>: {point.formatted}"
+            }
+        })
+        
+        logger.info(f"DEBUG** Created {len(data)} series with vibrant colors")
 
         return {
             "chart_categories": categories,
