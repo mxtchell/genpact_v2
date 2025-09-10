@@ -18,100 +18,147 @@ class InsuranceAdvanceTrend(AdvanceTrend):
         chart_vars = super().get_dynamic_layout_chart_vars()
         
         self.logger.info(f"DEBUG** Starting trend chart formatting enhancement")
+        self.logger.info(f"DEBUG** Available chart keys: {list(chart_vars.keys())}")
         
         # Process each chart configuration
         for chart_name, chart_config in chart_vars.items():
-            if "chart_y_axis" in chart_config:
-                # Determine if this is currency or percentage
-                is_currency = False
-                is_percentage = False
+            self.logger.info(f"DEBUG** Processing chart: {chart_name}")
+            self.logger.info(f"DEBUG** Chart config keys: {list(chart_config.keys())}")
+            
+            # Check what chart data structure looks like
+            if "chart_data" in chart_config:
+                self.logger.info(f"DEBUG** Chart data structure: {type(chart_config['chart_data'])}")
+                if isinstance(chart_config['chart_data'], list) and len(chart_config['chart_data']) > 0:
+                    self.logger.info(f"DEBUG** First series keys: {list(chart_config['chart_data'][0].keys()) if isinstance(chart_config['chart_data'][0], dict) else 'Not dict'}")
+            
+            # Check for different axis naming patterns
+            axis_keys = [k for k in chart_config.keys() if 'axis' in k.lower() or 'y' in k.lower()]
+            self.logger.info(f"DEBUG** Potential axis keys in chart {chart_name}: {axis_keys}")
+            
+            # Look for series data patterns
+            series_keys = [k for k in chart_config.keys() if 'series' in k.lower() or 'data' in k.lower()]
+            self.logger.info(f"DEBUG** Potential series keys in chart {chart_name}: {series_keys}")
+            
+            # Check the metrics info
+            self.logger.info(f"DEBUG** Available metrics: {getattr(self, 'metrics', 'No metrics attr')}")
+            self.logger.info(f"DEBUG** Format dict: {getattr(self, 'format_dict', 'No format_dict attr')}")
+            # Handle trend-specific chart structure with prefixes
+            prefixes = ["absolute_", "growth_", "difference_"]
+            processed_any = False
+            
+            for prefix in prefixes:
+                series_key = f"{prefix}series"
+                y_axis_key = f"{prefix}y_axis"
                 
-                # Check the metric format
-                for metric in self.metrics:
-                    metric_format = self.format_dict.get(metric, "")
-                    if "$" in metric_format:
-                        is_currency = True
-                    if "%" in metric_format:
-                        is_percentage = True
-                
-                self.logger.info(f"DEBUG** Chart {chart_name}: is_currency={is_currency}, is_percentage={is_percentage}")
-                
-                # Get all data values to determine range
-                all_values = []
-                if "chart_data" in chart_config:
-                    for series in chart_config["chart_data"]:
-                        if "data" in series:
-                            for point in series["data"]:
-                                if isinstance(point, dict) and "y" in point:
-                                    val = point["y"]
-                                elif isinstance(point, (int, float)):
-                                    val = point
-                                else:
-                                    continue
-                                if pd.notna(val) and isinstance(val, (int, float)):
-                                    all_values.append(val)
-                
-                if all_values:
-                    max_value = max(all_values)
-                    min_value = min(all_values)
-                    self.logger.info(f"DEBUG** Chart {chart_name} Y-axis range: {min_value} to {max_value}")
+                if series_key in chart_config:
+                    self.logger.info(f"DEBUG** Found {series_key} in chart {chart_name}")
                     
-                    # Apply formatting based on data type
-                    if is_percentage:
-                        # For percentages, check if values are decimals that need conversion
-                        if max_value <= 1:  # Values like 0.6312 need to be converted to 63.12
-                            # Scale the data and update y-axis
-                            if "chart_data" in chart_config:
-                                for series in chart_config["chart_data"]:
-                                    if "data" in series:
+                    # Determine if this is currency or percentage
+                    is_currency = False
+                    is_percentage = False
+                    
+                    # Check the metric format
+                    for metric in self.metrics:
+                        metric_format = self.format_dict.get(metric, "")
+                        if "$" in metric_format:
+                            is_currency = True
+                        if "%" in metric_format:
+                            is_percentage = True
+                    
+                    self.logger.info(f"DEBUG** Chart {chart_name} ({prefix}): is_currency={is_currency}, is_percentage={is_percentage}")
+                    
+                    # Get all data values to determine range from trend series
+                    all_values = []
+                    series_data = chart_config[series_key]
+                    if isinstance(series_data, list):
+                        for series in series_data:
+                            if isinstance(series, dict) and "data" in series:
+                                for point in series["data"]:
+                                    if isinstance(point, dict) and "y" in point:
+                                        val = point["y"]
+                                    elif isinstance(point, (int, float)):
+                                        val = point
+                                    else:
+                                        continue
+                                    if pd.notna(val) and isinstance(val, (int, float)):
+                                        all_values.append(val)
+                    
+                    self.logger.info(f"DEBUG** Found {len(all_values)} data values for {prefix} in chart {chart_name}")
+                    if all_values:
+                        self.logger.info(f"DEBUG** Value range: {min(all_values)} to {max(all_values)}")
+                        
+                        max_value = max(all_values)
+                        min_value = min(all_values)
+                        
+                        # Apply formatting based on data type
+                        if is_percentage:
+                            self.logger.info(f"DEBUG** Applying percentage formatting for {prefix}")
+                            # For percentages, check if values are decimals that need conversion
+                            if max_value <= 1:  # Values like 0.6312 need to be converted to 63.12
+                                # Scale the data and update y-axis
+                                series_data = chart_config[series_key]
+                                if isinstance(series_data, list):
+                                    for series in series_data:
+                                        if isinstance(series, dict) and "data" in series:
+                                            for i, point in enumerate(series["data"]):
+                                                if isinstance(point, dict) and "y" in point:
+                                                    series["data"][i]["y"] = point["y"] * 100
+                                                    if "formatted" not in series["data"][i]:
+                                                        series["data"][i]["formatted"] = f"{point['y'] * 100:.2f}%"
+                                                elif isinstance(point, (int, float)):
+                                                    series["data"][i] = point * 100
+                            
+                            chart_config[y_axis_key] = [{
+                                "title": {"text": ""},
+                                "labels": {"format": "{value:.1f}%"}
+                            }]
+                            self.logger.info(f"DEBUG** Applied percentage formatting to {y_axis_key}")
+                        
+                        elif is_currency and max_value >= 1000:
+                            self.logger.info(f"DEBUG** Applying currency M/K/B formatting for {prefix}")
+                            # Apply M/K/B formatting for large currency values
+                            scaled_max = max_value / 1000000  # Convert to millions
+                            
+                            if scaled_max <= 500:
+                                y_axis_config = {
+                                    "title": {"text": ""},
+                                    "min": 0,
+                                    "max": math.ceil(scaled_max / 100) * 100,
+                                    "tickInterval": 100,
+                                    "labels": {"format": "${value}M"}
+                                }
+                            else:
+                                y_axis_config = {
+                                    "title": {"text": ""},
+                                    "min": 0,
+                                    "max": math.ceil(scaled_max / 200) * 200,
+                                    "tickInterval": 200,
+                                    "labels": {"format": "${value}M"}
+                                }
+                            
+                            # Scale the data to millions
+                            series_data = chart_config[series_key]
+                            if isinstance(series_data, list):
+                                for series in series_data:
+                                    if isinstance(series, dict) and "data" in series:
                                         for i, point in enumerate(series["data"]):
                                             if isinstance(point, dict) and "y" in point:
-                                                series["data"][i]["y"] = point["y"] * 100
+                                                orig_value = point["y"]
+                                                series["data"][i]["y"] = orig_value / 1000000
                                                 if "formatted" not in series["data"][i]:
-                                                    series["data"][i]["formatted"] = f"{point['y'] * 100:.2f}%"
+                                                    series["data"][i]["formatted"] = f"${genpact_format_number(orig_value)}"
                                             elif isinstance(point, (int, float)):
-                                                series["data"][i] = point * 100
-                        
-                        chart_config["chart_y_axis"] = [{
-                            "title": {"text": ""},
-                            "labels": {"format": "{value:.1f}%"}
-                        }]
-                    
-                    elif is_currency and max_value >= 1000:
-                        # Apply M/K/B formatting for large currency values
-                        scaled_max = max_value / 1000000  # Convert to millions
-                        
-                        if scaled_max <= 500:
-                            y_axis_config = {
-                                "title": {"text": ""},
-                                "min": 0,
-                                "max": math.ceil(scaled_max / 100) * 100,
-                                "tickInterval": 100,
-                                "labels": {"format": "${value}M"}
-                            }
+                                                series["data"][i] = point / 1000000
+                            
+                            chart_config[y_axis_key] = [y_axis_config]
+                            self.logger.info(f"DEBUG** Applied M/K/B formatting to {y_axis_key}")
+                            processed_any = True
                         else:
-                            y_axis_config = {
-                                "title": {"text": ""},
-                                "min": 0,
-                                "max": math.ceil(scaled_max / 200) * 200,
-                                "tickInterval": 200,
-                                "labels": {"format": "${value}M"}
-                            }
-                        
-                        # Scale the data to millions
-                        if "chart_data" in chart_config:
-                            for series in chart_config["chart_data"]:
-                                if "data" in series:
-                                    for i, point in enumerate(series["data"]):
-                                        if isinstance(point, dict) and "y" in point:
-                                            orig_value = point["y"]
-                                            series["data"][i]["y"] = orig_value / 1000000
-                                            if "formatted" not in series["data"][i]:
-                                                series["data"][i]["formatted"] = f"${genpact_format_number(orig_value)}"
-                                        elif isinstance(point, (int, float)):
-                                            series["data"][i] = point / 1000000
-                        
-                        chart_config["chart_y_axis"] = [y_axis_config]
-                        self.logger.info(f"DEBUG** Applied M/K/B formatting to chart {chart_name}")
+                            self.logger.info(f"DEBUG** Skipping formatting for {prefix} - not currency or small currency values")
+                    else:
+                        self.logger.info(f"DEBUG** No data values found for {prefix}")
+            
+            if not processed_any:
+                self.logger.info(f"DEBUG** No formatting applied to chart {chart_name}")
         
         return chart_vars
