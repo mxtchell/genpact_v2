@@ -280,44 +280,15 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         # Build series data - create separate series for Current and Previous
         data = []
         
-        # Vibrant color palette for bars
-        current_colors = [
-            "#2E86C1",  # Professional blue
-            "#28B463",  # Vibrant green  
-            "#F39C12",  # Bright orange
-            "#E74C3C",  # Bold red
-            "#8E44AD",  # Rich purple
-            "#17A2B8",  # Teal
-            "#FFC107",  # Golden yellow
-            "#DC3545",  # Crimson
-            "#20C997",  # Emerald green
-            "#6F42C1",  # Deep indigo
-            "#FD7E14",  # Bright orange-red
-            "#198754"   # Forest green
-        ]
+        # Simple two-color scheme: light blue for current, light orange for previous
+        current_color = "#5DADE2"   # Light blue for current period
+        previous_color = "#F8C471"  # Light orange for comparison period
         
-        # Complementary colors for Previous period (slightly muted but still vibrant)
-        previous_colors = [
-            "#5DADE2",  # Lighter blue
-            "#58D68D",  # Lighter green
-            "#F8C471",  # Lighter orange  
-            "#EC7063",  # Lighter red
-            "#AF7AC5",  # Lighter purple
-            "#5DADE2",  # Light teal
-            "#F7DC6F",  # Light yellow
-            "#F1948A",  # Light crimson
-            "#7DCEA0",  # Light emerald
-            "#BB8FCE",  # Light indigo
-            "#FDAB61",  # Light orange-red
-            "#82E0AA"   # Light forest green
-        ]
-        
-        # Current series with colorful bars - use metric name + Current
+        # Current series with single light blue color - use metric name + Current
         current_series = {
             "name": f"{metric.replace(' (Current)', '')} (Current)",
             "data": current_data,
-            "colorByPoint": True,
-            "colors": current_colors,
+            "color": current_color,  # Single color for all bars
             "dataLabels": {
                 "enabled": False
             },
@@ -327,13 +298,12 @@ class InsuranceLegacyBreakout(BreakoutAnalysis):
         }
         data.append(current_series)
         
-        # Previous series (if available) with complementary colors - use metric name + Previous  
+        # Previous series (if available) with single light orange color - use metric name + Previous  
         if has_previous and previous_data:
             previous_series = {
                 "name": f"{previous_metric.replace(' (Previous)', '')} (Previous)", 
                 "data": previous_data,
-                "colorByPoint": True,
-                "colors": previous_colors,
+                "color": previous_color,  # Single color for all bars
                 "dataLabels": {
                     "enabled": False
                 },

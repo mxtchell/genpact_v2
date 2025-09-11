@@ -176,46 +176,18 @@ class InsuranceDriverAnalysis(DriverAnalysis):
                 "labels": {"format": formatter.get('value_format')}
             }]
 
-        # Vibrant color palette like dimension breakout
-        current_colors = [
-            "#2E86C1",  # Professional blue
-            "#28B463",  # Vibrant green  
-            "#F39C12",  # Bright orange
-            "#E74C3C",  # Bold red
-            "#8E44AD",  # Rich purple
-            "#17A2B8",  # Teal
-            "#FFC107",  # Golden yellow
-            "#DC3545",  # Crimson
-            "#20C997",  # Emerald green
-            "#6F42C1",  # Deep indigo
-            "#FD7E14",  # Bright orange-red
-            "#198754"   # Forest green
-        ]
-        
-        previous_colors = [
-            "#5DADE2",  # Lighter blue
-            "#58D68D",  # Lighter green
-            "#F8C471",  # Lighter orange  
-            "#EC7063",  # Lighter red
-            "#AF7AC5",  # Lighter purple
-            "#5DADE2",  # Light teal
-            "#F7DC6F",  # Light yellow
-            "#F1948A",  # Light crimson
-            "#7DCEA0",  # Light emerald
-            "#BB8FCE",  # Light indigo
-            "#FDAB61",  # Light orange-red
-            "#82E0AA"   # Light forest green
-        ]
+        # Simple two-color scheme: light blue for current, light orange for previous
+        current_color = "#5DADE2"   # Light blue for current period
+        previous_color = "#F8C471"  # Light orange for comparison period
 
         data = []
 
-        # Current series with vibrant colors - add metric name
+        # Current series with single light blue color - add metric name
         metric_name = self.ba.target_metric.get("label", self.ba.target_metric.get("name", "Metric"))
         data.append({
             "name": f"{metric_name} (Current)",
             "data": curr_data,
-            "colorByPoint": True,
-            "colors": current_colors,
+            "color": current_color,  # Single color for all bars
             "dataLabels": {
                 "enabled": False
             },
@@ -224,12 +196,11 @@ class InsuranceDriverAnalysis(DriverAnalysis):
             }
         })
 
-        # Previous series with complementary colors - add metric name
+        # Previous series with single light orange color - add metric name
         data.append({
             "name": f"{metric_name} (Previous)",
             "data": prev_data,
-            "colorByPoint": True,
-            "colors": previous_colors,
+            "color": previous_color,  # Single color for all bars
             "dataLabels": {
                 "enabled": False
             },
