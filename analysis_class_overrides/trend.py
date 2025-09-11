@@ -155,23 +155,33 @@ class InsuranceAdvanceTrend(AdvanceTrend):
                                     }
                                 self.logger.info(f"DEBUG** Applied symmetric Y-axis for difference chart: -{axis_max}M to {axis_max}M")
                             else:
-                                # For absolute and growth charts, start from 0
-                                if scaled_max <= 500:
-                                    y_axis_config = {
-                                        "title": {"text": ""},
-                                        "min": 0,
-                                        "max": math.ceil(scaled_max / 100) * 100,
-                                        "tickInterval": 100,
-                                        "labels": {"format": "${value}M"}
-                                    }
+                                # For absolute and growth charts, use dynamic range instead of starting from 0
+                                # This prevents charts from looking flat when values are high (e.g., 1.9B-2.0B range)
+                                data_range = scaled_max - scaled_min
+                                
+                                # Add padding above and below the data range (10% padding)
+                                padding = data_range * 0.1
+                                axis_min = max(0, scaled_min - padding)  # Don't go below 0 for absolute values
+                                axis_max = scaled_max + padding
+                                
+                                # Round to nice intervals
+                                if axis_max <= 500:
+                                    axis_max = math.ceil(axis_max / 100) * 100
+                                    axis_min = math.floor(axis_min / 100) * 100
+                                    tick_interval = 100
                                 else:
-                                    y_axis_config = {
-                                        "title": {"text": ""},
-                                        "min": 0,
-                                        "max": math.ceil(scaled_max / 200) * 200,
-                                        "tickInterval": 200,
-                                        "labels": {"format": "${value}M"}
-                                    }
+                                    axis_max = math.ceil(axis_max / 200) * 200
+                                    axis_min = math.floor(axis_min / 200) * 200
+                                    tick_interval = 200
+                                
+                                y_axis_config = {
+                                    "title": {"text": ""},
+                                    "min": axis_min,
+                                    "max": axis_max,
+                                    "tickInterval": tick_interval,
+                                    "labels": {"format": "${value}M"}
+                                }
+                                self.logger.info(f"DEBUG** Applied dynamic Y-axis for {prefix} chart: ${axis_min}M to ${axis_max}M")
                             
                             # Scale the data to millions
                             series_data = chart_config[series_key]
